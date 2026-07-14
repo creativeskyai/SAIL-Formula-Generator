@@ -70,6 +70,7 @@ export function GuidedMode() {
             <SlotForm
               slots={recipe.slots}
               values={values}
+              variables={variables}
               onChange={(v) => setValues(recipe.id, v)}
             />
           </div>

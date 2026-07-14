@@ -1,9 +1,100 @@
+import { useMemo, useState } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { EditorView } from '@codemirror/view';
+import { catalog, type FunctionSpec } from '@/core/catalog';
+import { useStore } from '../store';
+import { analyzeCompose, buildSkeleton } from '../lib/compose';
+import { sail } from '../sail-language';
+import { TextInput } from '../components/primitives';
+import { cn } from '@/lib/utils';
+
 export function ComposeMode() {
+  const composeText = useStore((s) => s.composeText);
+  const setComposeText = useStore((s) => s.setComposeText);
+  const [query, setQuery] = useState('');
+
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const all = catalog.all();
+    const filtered = q
+      ? all.filter(
+          (f) => f.name.toLowerCase().includes(q) || f.summary.toLowerCase().includes(q),
+        )
+      : all;
+    const groups: Record<string, FunctionSpec[]> = {};
+    for (const f of filtered) (groups[f.category] ??= []).push(f);
+    return groups;
+  }, [query]);
+
+  const analysis = useMemo(() => analyzeCompose(composeText), [composeText]);
+
+  const insert = (spec: FunctionSpec) => {
+    const snippet = buildSkeleton(spec);
+    setComposeText(composeText ? `${composeText}\n\n${snippet}` : snippet);
+  };
+
   return (
-    <div className="flex h-full items-center justify-center">
-      <p className="text-sm text-muted-foreground">
-        Compose mode (catalog browser + free-text pane) arrives in Phase 5.
-      </p>
+    <div className="grid h-full grid-cols-[300px_minmax(0,1fr)] gap-4">
+      <div className="flex flex-col gap-2 overflow-hidden border-r border-border pr-3">
+        <TextInput
+          placeholder="Search functions…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <div className="flex flex-col gap-3 overflow-y-auto">
+          {Object.entries(matches).map(([category, list]) => (
+            <div key={category} className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {category}
+              </span>
+              {list.map((f) => (
+                <button
+                  key={f.name}
+                  type="button"
+                  onClick={() => insert(f)}
+                  title={f.summary}
+                  className="rounded px-2 py-1 text-left font-mono text-xs transition hover:bg-muted"
+                >
+                  {f.name}
+                </button>
+              ))}
+            </div>
+          ))}
+          {Object.keys(matches).length === 0 && (
+            <span className="text-xs text-muted-foreground">No functions match.</span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-col gap-2">
+        <p className="text-xs text-muted-foreground">
+          Click a function to insert a skeleton, then edit freely. Validation checks bracket
+          balance and function names only — the full tree editor is post-MVP.
+        </p>
+        <div className="min-h-0 flex-1 overflow-auto rounded-md border border-border text-sm">
+          <CodeMirror
+            value={composeText}
+            extensions={[sail(), EditorView.lineWrapping]}
+            onChange={setComposeText}
+            basicSetup={{ lineNumbers: true, foldGutter: false }}
+          />
+        </div>
+        <div className="flex flex-col gap-1 text-xs">
+          <span
+            className={cn(
+              'font-medium',
+              analysis.balanced ? 'text-info' : 'text-destructive',
+            )}
+          >
+            {analysis.balanced ? 'Brackets balanced' : 'Unbalanced brackets or unterminated string'}
+          </span>
+          {analysis.unknownFunctions.length > 0 && (
+            <span className="text-warning">
+              Unrecognized functions: {analysis.unknownFunctions.join(', ')}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

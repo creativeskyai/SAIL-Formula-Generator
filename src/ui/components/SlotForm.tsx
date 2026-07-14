@@ -5,7 +5,9 @@
  * edit calls `onChange` with the next values object.
  */
 
+import { useId } from 'react';
 import type { SlotSpec, SlotType } from '@/core/recipe';
+import type { DeclaredVariable } from '@/core/types';
 import { getRecipe } from '@/templates';
 import { Button, Field, Select, TextInput } from './primitives';
 
@@ -44,15 +46,16 @@ interface SlotInputProps {
   value: unknown;
   onChange: (v: unknown) => void;
   placeholder?: string;
+  variables: DeclaredVariable[];
 }
 
-function SlotInput({ slot, value, onChange, placeholder }: SlotInputProps) {
+function SlotInput({ slot, value, onChange, placeholder, variables }: SlotInputProps) {
+  const listId = useId();
   switch (slot.type) {
     case 'text':
     case 'expression':
     case 'recordTypeRef':
     case 'fieldRef':
-    case 'variableRef':
       return (
         <TextInput
           value={(value as string) ?? ''}
@@ -61,6 +64,29 @@ function SlotInput({ slot, value, onChange, placeholder }: SlotInputProps) {
           onChange={(e) => onChange(e.target.value)}
         />
       );
+    case 'variableRef': {
+      const options = variables
+        .filter((v) => !slot.domains || slot.domains.includes(v.domain))
+        .map((v) => `${v.domain}!${v.name}`);
+      return (
+        <>
+          <TextInput
+            value={(value as string) ?? ''}
+            placeholder={placeholder}
+            className="font-mono"
+            list={options.length ? listId : undefined}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          {options.length > 0 && (
+            <datalist id={listId}>
+              {options.map((o) => (
+                <option key={o} value={o} />
+              ))}
+            </datalist>
+          )}
+        </>
+      );
+    }
     case 'number':
       return (
         <TextInput
@@ -100,6 +126,7 @@ function SlotInput({ slot, value, onChange, placeholder }: SlotInputProps) {
                   slot={slot.item}
                   value={item}
                   placeholder={placeholder}
+                  variables={variables}
                   onChange={(nv) => {
                     const next = items.slice();
                     next[i] = nv;
@@ -139,6 +166,7 @@ function SlotInput({ slot, value, onChange, placeholder }: SlotInputProps) {
           <SlotForm
             slots={recipe.slots}
             values={(value as Record<string, unknown>) ?? {}}
+            variables={variables}
             onChange={(v) => onChange(v)}
           />
         </div>
@@ -151,9 +179,10 @@ export interface SlotFormProps {
   slots: SlotSpec[];
   values: Record<string, unknown>;
   onChange: (values: Record<string, unknown>) => void;
+  variables?: DeclaredVariable[];
 }
 
-export function SlotForm({ slots, values, onChange }: SlotFormProps) {
+export function SlotForm({ slots, values, onChange, variables = [] }: SlotFormProps) {
   return (
     <div className="flex flex-col gap-3">
       {slots.map((s) => (
@@ -162,6 +191,7 @@ export function SlotForm({ slots, values, onChange }: SlotFormProps) {
             slot={s.slot}
             value={values[s.id]}
             placeholder={s.placeholder}
+            variables={variables}
             onChange={(v) => onChange({ ...values, [s.id]: v })}
           />
         </Field>
