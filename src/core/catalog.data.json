@@ -1,0 +1,720 @@
+{
+  "appianVersion": "24.4",
+  "functions": [
+    {
+      "name": "a!queryRecordType",
+      "category": "query",
+      "summary": "Query a record type, returning a DataSubset of records.",
+      "returns": "Any",
+      "params": [
+        { "name": "recordType", "type": "RecordType", "required": true, "keywordOnly": true, "doc": "The record type to query." },
+        { "name": "fields", "type": "List", "keywordOnly": true, "doc": "Fields or related records to retrieve." },
+        { "name": "filters", "type": "Any", "keywordOnly": true, "doc": "a!queryFilter or a!queryLogicalExpression." },
+        { "name": "pagingInfo", "type": "Map", "required": true, "keywordOnly": true, "doc": "a!pagingInfo controlling paging and sort." },
+        { "name": "fetchTotalCount", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!queryFilter",
+      "category": "query",
+      "summary": "A single filter condition on a field.",
+      "returns": "Map",
+      "params": [
+        { "name": "field", "type": "Any", "required": true, "keywordOnly": true },
+        { "name": "operator", "type": "Text", "required": true, "keywordOnly": true, "enumValues": ["=", "<>", ">", ">=", "<", "<=", "in", "not in", "starts with", "not starts with", "ends with", "not ends with", "includes", "not includes", "between", "is null", "not null"] },
+        { "name": "value", "type": "Any", "keywordOnly": true },
+        { "name": "applyWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!queryLogicalExpression",
+      "category": "query",
+      "summary": "Combine multiple filters with a logical operator.",
+      "returns": "Map",
+      "params": [
+        { "name": "operator", "type": "Text", "required": true, "keywordOnly": true, "enumValues": ["AND", "OR"] },
+        { "name": "filters", "type": "List", "keywordOnly": true },
+        { "name": "logicalExpressions", "type": "List", "keywordOnly": true },
+        { "name": "ignoreFiltersWithEmptyValues", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!pagingInfo",
+      "category": "query",
+      "summary": "Paging and sort configuration for a query.",
+      "returns": "Map",
+      "params": [
+        { "name": "startIndex", "type": "Integer", "required": true, "keywordOnly": true },
+        { "name": "batchSize", "type": "Integer", "required": true, "keywordOnly": true },
+        { "name": "sort", "type": "Any", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!sortInfo",
+      "category": "query",
+      "summary": "A sort directive for a query.",
+      "returns": "Map",
+      "params": [
+        { "name": "field", "type": "Any", "required": true, "keywordOnly": true },
+        { "name": "ascending", "type": "Boolean", "required": true, "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!recordData",
+      "category": "query",
+      "summary": "Reference record type data with optional filters and sort.",
+      "returns": "Any",
+      "params": [
+        { "name": "recordType", "type": "RecordType", "required": true, "keywordOnly": true },
+        { "name": "filters", "type": "Any", "keywordOnly": true },
+        { "name": "sort", "type": "Any", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!textField",
+      "category": "component",
+      "summary": "A single-line text input.",
+      "returns": "Component",
+      "params": [
+        { "name": "label", "type": "Text", "keywordOnly": true },
+        { "name": "labelPosition", "type": "Text", "keywordOnly": true, "enumValues": ["ABOVE", "ADJACENT", "COLLAPSED", "JUSTIFIED"] },
+        { "name": "instructions", "type": "Text", "keywordOnly": true },
+        { "name": "placeholder", "type": "Text", "keywordOnly": true },
+        { "name": "value", "type": "Text", "keywordOnly": true },
+        { "name": "saveInto", "type": "Any", "keywordOnly": true },
+        { "name": "required", "type": "Boolean", "keywordOnly": true },
+        { "name": "disabled", "type": "Boolean", "keywordOnly": true },
+        { "name": "readOnly", "type": "Boolean", "keywordOnly": true },
+        { "name": "characterLimit", "type": "Number", "keywordOnly": true },
+        { "name": "validations", "type": "Any", "keywordOnly": true },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true },
+        { "name": "align", "type": "Text", "keywordOnly": true, "enumValues": ["LEFT", "CENTER", "RIGHT"] }
+      ]
+    },
+    {
+      "name": "a!integerField",
+      "category": "component",
+      "summary": "A numeric input restricted to integers.",
+      "returns": "Component",
+      "params": [
+        { "name": "label", "type": "Text", "keywordOnly": true },
+        { "name": "labelPosition", "type": "Text", "keywordOnly": true, "enumValues": ["ABOVE", "ADJACENT", "COLLAPSED", "JUSTIFIED"] },
+        { "name": "instructions", "type": "Text", "keywordOnly": true },
+        { "name": "placeholder", "type": "Text", "keywordOnly": true },
+        { "name": "value", "type": "Integer", "keywordOnly": true },
+        { "name": "saveInto", "type": "Any", "keywordOnly": true },
+        { "name": "required", "type": "Boolean", "keywordOnly": true },
+        { "name": "disabled", "type": "Boolean", "keywordOnly": true },
+        { "name": "readOnly", "type": "Boolean", "keywordOnly": true },
+        { "name": "validations", "type": "Any", "keywordOnly": true },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!paragraphField",
+      "category": "component",
+      "summary": "A multi-line text input.",
+      "returns": "Component",
+      "params": [
+        { "name": "label", "type": "Text", "keywordOnly": true },
+        { "name": "labelPosition", "type": "Text", "keywordOnly": true, "enumValues": ["ABOVE", "ADJACENT", "COLLAPSED", "JUSTIFIED"] },
+        { "name": "instructions", "type": "Text", "keywordOnly": true },
+        { "name": "placeholder", "type": "Text", "keywordOnly": true },
+        { "name": "value", "type": "Text", "keywordOnly": true },
+        { "name": "saveInto", "type": "Any", "keywordOnly": true },
+        { "name": "required", "type": "Boolean", "keywordOnly": true },
+        { "name": "disabled", "type": "Boolean", "keywordOnly": true },
+        { "name": "readOnly", "type": "Boolean", "keywordOnly": true },
+        { "name": "characterLimit", "type": "Number", "keywordOnly": true },
+        { "name": "height", "type": "Text", "keywordOnly": true, "enumValues": ["SHORT", "MEDIUM", "TALL"] },
+        { "name": "validations", "type": "Any", "keywordOnly": true },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!dropdownField",
+      "category": "component",
+      "summary": "A single-select dropdown.",
+      "returns": "Component",
+      "params": [
+        { "name": "label", "type": "Text", "keywordOnly": true },
+        { "name": "labelPosition", "type": "Text", "keywordOnly": true, "enumValues": ["ABOVE", "ADJACENT", "COLLAPSED", "JUSTIFIED"] },
+        { "name": "instructions", "type": "Text", "keywordOnly": true },
+        { "name": "placeholder", "type": "Text", "keywordOnly": true },
+        { "name": "choiceLabels", "type": "List", "keywordOnly": true },
+        { "name": "choiceValues", "type": "List", "keywordOnly": true },
+        { "name": "value", "type": "Any", "keywordOnly": true },
+        { "name": "saveInto", "type": "Any", "keywordOnly": true },
+        { "name": "required", "type": "Boolean", "keywordOnly": true },
+        { "name": "disabled", "type": "Boolean", "keywordOnly": true },
+        { "name": "validations", "type": "Any", "keywordOnly": true },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!checkboxField",
+      "category": "component",
+      "summary": "A group of checkboxes for multi-select.",
+      "returns": "Component",
+      "params": [
+        { "name": "label", "type": "Text", "keywordOnly": true },
+        { "name": "instructions", "type": "Text", "keywordOnly": true },
+        { "name": "choiceLabels", "type": "List", "keywordOnly": true },
+        { "name": "choiceValues", "type": "List", "keywordOnly": true },
+        { "name": "value", "type": "Any", "keywordOnly": true },
+        { "name": "saveInto", "type": "Any", "keywordOnly": true },
+        { "name": "required", "type": "Boolean", "keywordOnly": true },
+        { "name": "disabled", "type": "Boolean", "keywordOnly": true },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!dateField",
+      "category": "component",
+      "summary": "A date input.",
+      "returns": "Component",
+      "params": [
+        { "name": "label", "type": "Text", "keywordOnly": true },
+        { "name": "labelPosition", "type": "Text", "keywordOnly": true, "enumValues": ["ABOVE", "ADJACENT", "COLLAPSED", "JUSTIFIED"] },
+        { "name": "instructions", "type": "Text", "keywordOnly": true },
+        { "name": "value", "type": "Date", "keywordOnly": true },
+        { "name": "saveInto", "type": "Any", "keywordOnly": true },
+        { "name": "required", "type": "Boolean", "keywordOnly": true },
+        { "name": "disabled", "type": "Boolean", "keywordOnly": true },
+        { "name": "readOnly", "type": "Boolean", "keywordOnly": true },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!sectionLayout",
+      "category": "layout",
+      "summary": "A titled section grouping contents.",
+      "returns": "Component",
+      "params": [
+        { "name": "label", "type": "Text", "keywordOnly": true },
+        { "name": "contents", "type": "List", "keywordOnly": true },
+        { "name": "isCollapsible", "type": "Boolean", "keywordOnly": true },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!columnsLayout",
+      "category": "layout",
+      "summary": "A horizontal row of columns.",
+      "returns": "Component",
+      "params": [
+        { "name": "columns", "type": "List", "keywordOnly": true },
+        { "name": "spacing", "type": "Text", "keywordOnly": true, "enumValues": ["NONE", "DENSE", "STANDARD", "SPARSE"] },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!columnLayout",
+      "category": "layout",
+      "summary": "A single column within a!columnsLayout.",
+      "returns": "Component",
+      "params": [
+        { "name": "contents", "type": "List", "keywordOnly": true },
+        { "name": "width", "type": "Text", "keywordOnly": true },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!formLayout",
+      "category": "layout",
+      "summary": "The top-level layout of a form interface.",
+      "returns": "Component",
+      "params": [
+        { "name": "label", "type": "Text", "keywordOnly": true },
+        { "name": "contents", "type": "List", "keywordOnly": true },
+        { "name": "buttons", "type": "Any", "keywordOnly": true },
+        { "name": "titleBarStyle", "type": "Text", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!buttonWidget",
+      "category": "layout",
+      "summary": "A button that saves a value or submits.",
+      "returns": "Component",
+      "params": [
+        { "name": "label", "type": "Text", "keywordOnly": true },
+        { "name": "value", "type": "Any", "keywordOnly": true },
+        { "name": "saveInto", "type": "Any", "keywordOnly": true },
+        { "name": "style", "type": "Text", "keywordOnly": true, "enumValues": ["SOLID", "OUTLINE", "LINK", "GHOST"] },
+        { "name": "submit", "type": "Boolean", "keywordOnly": true },
+        { "name": "showWhen", "type": "Boolean", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "if",
+      "category": "logic",
+      "summary": "Return one of two values based on a condition.",
+      "returns": "Any",
+      "params": [
+        { "name": "condition", "type": "Boolean", "required": true },
+        { "name": "valueIfTrue", "type": "Any", "required": true },
+        { "name": "valueIfFalse", "type": "Any", "required": true }
+      ]
+    },
+    {
+      "name": "and",
+      "category": "logic",
+      "summary": "Logical AND of all arguments.",
+      "returns": "Boolean",
+      "params": [{ "name": "conditions", "type": "Boolean", "variadic": true }]
+    },
+    {
+      "name": "or",
+      "category": "logic",
+      "summary": "Logical OR of all arguments.",
+      "returns": "Boolean",
+      "params": [{ "name": "conditions", "type": "Boolean", "variadic": true }]
+    },
+    {
+      "name": "not",
+      "category": "logic",
+      "summary": "Logical negation.",
+      "returns": "Boolean",
+      "params": [{ "name": "value", "type": "Boolean", "required": true }]
+    },
+    {
+      "name": "a!match",
+      "category": "logic",
+      "summary": "Evaluate a value against cases, returning the matching result or a default.",
+      "returns": "Any",
+      "params": [
+        { "name": "value", "type": "Any", "required": true, "keywordOnly": true },
+        { "name": "equals", "type": "Any", "keywordOnly": true },
+        { "name": "whenTrue", "type": "Boolean", "keywordOnly": true },
+        { "name": "then", "type": "Any", "keywordOnly": true },
+        { "name": "default", "type": "Any", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "choose",
+      "category": "logic",
+      "summary": "Select the nth option (1-indexed).",
+      "returns": "Any",
+      "params": [
+        { "name": "index", "type": "Integer", "required": true },
+        { "name": "option", "type": "Any", "variadic": true }
+      ]
+    },
+    {
+      "name": "a!localVariables",
+      "category": "logic",
+      "summary": "Declare local variables followed by an expression that uses them.",
+      "returns": "Any",
+      "params": [{ "name": "arguments", "type": "Any", "variadic": true }]
+    },
+    {
+      "name": "a!isNullOrEmpty",
+      "category": "logic",
+      "summary": "True when the value is null or empty.",
+      "returns": "Boolean",
+      "params": [{ "name": "value", "type": "Any", "required": true }]
+    },
+    {
+      "name": "a!isNotNullOrEmpty",
+      "category": "logic",
+      "summary": "True when the value is neither null nor empty.",
+      "returns": "Boolean",
+      "params": [{ "name": "value", "type": "Any", "required": true }]
+    },
+    {
+      "name": "a!defaultValue",
+      "category": "logic",
+      "summary": "Return value, or default when value is null or empty.",
+      "returns": "Any",
+      "params": [
+        { "name": "value", "type": "Any", "required": true },
+        { "name": "default", "type": "Any", "required": true }
+      ]
+    },
+    {
+      "name": "a!forEach",
+      "category": "looping",
+      "summary": "Apply an expression to each item of a list. fv!item, fv!index available.",
+      "returns": "List",
+      "params": [
+        { "name": "items", "type": "List", "required": true, "keywordOnly": true },
+        { "name": "expression", "type": "Any", "required": true, "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "filter",
+      "category": "looping",
+      "summary": "Return list items for which the predicate is true.",
+      "returns": "List",
+      "params": [
+        { "name": "predicate", "type": "Any", "required": true },
+        { "name": "list", "type": "List", "required": true }
+      ]
+    },
+    {
+      "name": "reduce",
+      "category": "looping",
+      "summary": "Fold a list into a single value with an accumulator function.",
+      "returns": "Any",
+      "params": [
+        { "name": "function", "type": "Any", "required": true },
+        { "name": "initialValue", "type": "Any", "required": true },
+        { "name": "list", "type": "List", "required": true }
+      ]
+    },
+    {
+      "name": "all",
+      "category": "looping",
+      "summary": "True when the predicate holds for every list item.",
+      "returns": "Boolean",
+      "params": [
+        { "name": "predicate", "type": "Any", "required": true },
+        { "name": "list", "type": "List", "required": true }
+      ]
+    },
+    {
+      "name": "any",
+      "category": "looping",
+      "summary": "True when the predicate holds for at least one list item.",
+      "returns": "Boolean",
+      "params": [
+        { "name": "predicate", "type": "Any", "required": true },
+        { "name": "list", "type": "List", "required": true }
+      ]
+    },
+    {
+      "name": "a!update",
+      "category": "looping",
+      "summary": "Return a copy of data with the value at index replaced.",
+      "returns": "Any",
+      "params": [
+        { "name": "data", "type": "Any", "required": true, "keywordOnly": true },
+        { "name": "index", "type": "Any", "required": true, "keywordOnly": true },
+        { "name": "value", "type": "Any", "required": true, "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!flatten",
+      "category": "looping",
+      "summary": "Flatten a nested list into a single-level list.",
+      "returns": "List",
+      "params": [{ "name": "list", "type": "List", "required": true }]
+    },
+    {
+      "name": "merge",
+      "category": "looping",
+      "summary": "Merge multiple lists element-wise into a list of lists.",
+      "returns": "List",
+      "params": [{ "name": "list", "type": "List", "variadic": true, "required": true }]
+    },
+    {
+      "name": "a!validationMessage",
+      "category": "validation",
+      "summary": "A validation message shown when validateAfter conditions are met.",
+      "returns": "Any",
+      "params": [
+        { "name": "message", "type": "Text", "required": true, "keywordOnly": true },
+        { "name": "validateAfter", "type": "Text", "keywordOnly": true }
+      ]
+    },
+    {
+      "name": "a!save",
+      "category": "save",
+      "summary": "Save a value into a target when an event fires.",
+      "returns": "Any",
+      "params": [
+        { "name": "target", "type": "Any", "required": true },
+        { "name": "value", "type": "Any" }
+      ]
+    },
+    {
+      "name": "concat",
+      "category": "text",
+      "summary": "Concatenate all arguments into text.",
+      "returns": "Text",
+      "params": [{ "name": "value", "type": "Any", "variadic": true }]
+    },
+    {
+      "name": "len",
+      "category": "text",
+      "summary": "Length of text or a list.",
+      "returns": "Integer",
+      "params": [{ "name": "value", "type": "Any", "required": true }]
+    },
+    {
+      "name": "upper",
+      "category": "text",
+      "summary": "Uppercase a text value.",
+      "returns": "Text",
+      "params": [{ "name": "text", "type": "Text", "required": true }]
+    },
+    {
+      "name": "lower",
+      "category": "text",
+      "summary": "Lowercase a text value.",
+      "returns": "Text",
+      "params": [{ "name": "text", "type": "Text", "required": true }]
+    },
+    {
+      "name": "trim",
+      "category": "text",
+      "summary": "Remove leading and trailing whitespace.",
+      "returns": "Text",
+      "params": [{ "name": "text", "type": "Text", "required": true }]
+    },
+    {
+      "name": "left",
+      "category": "text",
+      "summary": "Leftmost characters of a text value.",
+      "returns": "Text",
+      "params": [
+        { "name": "text", "type": "Text", "required": true },
+        { "name": "numChars", "type": "Integer", "required": true }
+      ]
+    },
+    {
+      "name": "right",
+      "category": "text",
+      "summary": "Rightmost characters of a text value.",
+      "returns": "Text",
+      "params": [
+        { "name": "text", "type": "Text", "required": true },
+        { "name": "numChars", "type": "Integer", "required": true }
+      ]
+    },
+    {
+      "name": "mid",
+      "category": "text",
+      "summary": "Substring starting at a position for a length.",
+      "returns": "Text",
+      "params": [
+        { "name": "text", "type": "Text", "required": true },
+        { "name": "start", "type": "Integer", "required": true },
+        { "name": "numChars", "type": "Integer", "required": true }
+      ]
+    },
+    {
+      "name": "substitute",
+      "category": "text",
+      "summary": "Replace all occurrences of a substring.",
+      "returns": "Text",
+      "params": [
+        { "name": "text", "type": "Text", "required": true },
+        { "name": "oldText", "type": "Text", "required": true },
+        { "name": "newText", "type": "Text", "required": true }
+      ]
+    },
+    {
+      "name": "text",
+      "category": "text",
+      "summary": "Format a value as text using a format string.",
+      "returns": "Text",
+      "params": [
+        { "name": "value", "type": "Any", "required": true },
+        { "name": "format", "type": "Text", "required": true }
+      ]
+    },
+    {
+      "name": "now",
+      "category": "date",
+      "summary": "The current date and time.",
+      "returns": "DateTime",
+      "params": []
+    },
+    {
+      "name": "today",
+      "category": "date",
+      "summary": "The current date.",
+      "returns": "Date",
+      "params": []
+    },
+    {
+      "name": "date",
+      "category": "date",
+      "summary": "Construct a date from year, month, day.",
+      "returns": "Date",
+      "params": [
+        { "name": "year", "type": "Integer", "required": true },
+        { "name": "month", "type": "Integer", "required": true },
+        { "name": "day", "type": "Integer", "required": true }
+      ]
+    },
+    {
+      "name": "datetime",
+      "category": "date",
+      "summary": "Construct a datetime from components.",
+      "returns": "DateTime",
+      "params": [
+        { "name": "year", "type": "Integer", "required": true },
+        { "name": "month", "type": "Integer", "required": true },
+        { "name": "day", "type": "Integer", "required": true },
+        { "name": "hour", "type": "Integer" },
+        { "name": "minute", "type": "Integer" },
+        { "name": "second", "type": "Integer" }
+      ]
+    },
+    {
+      "name": "year",
+      "category": "date",
+      "summary": "The year component of a date.",
+      "returns": "Integer",
+      "params": [{ "name": "date", "type": "Any", "required": true }]
+    },
+    {
+      "name": "month",
+      "category": "date",
+      "summary": "The month component of a date.",
+      "returns": "Integer",
+      "params": [{ "name": "date", "type": "Any", "required": true }]
+    },
+    {
+      "name": "day",
+      "category": "date",
+      "summary": "The day component of a date.",
+      "returns": "Integer",
+      "params": [{ "name": "date", "type": "Any", "required": true }]
+    },
+    {
+      "name": "sum",
+      "category": "math",
+      "summary": "Sum of all arguments.",
+      "returns": "Number",
+      "params": [{ "name": "number", "type": "Number", "variadic": true }]
+    },
+    {
+      "name": "product",
+      "category": "math",
+      "summary": "Product of all arguments.",
+      "returns": "Number",
+      "params": [{ "name": "number", "type": "Number", "variadic": true }]
+    },
+    {
+      "name": "mod",
+      "category": "math",
+      "summary": "Remainder of number divided by divisor.",
+      "returns": "Number",
+      "params": [
+        { "name": "number", "type": "Number", "required": true },
+        { "name": "divisor", "type": "Number", "required": true }
+      ]
+    },
+    {
+      "name": "round",
+      "category": "math",
+      "summary": "Round a number to a number of digits.",
+      "returns": "Number",
+      "params": [
+        { "name": "number", "type": "Number", "required": true },
+        { "name": "numDigits", "type": "Integer" }
+      ]
+    },
+    {
+      "name": "abs",
+      "category": "math",
+      "summary": "Absolute value.",
+      "returns": "Number",
+      "params": [{ "name": "number", "type": "Number", "required": true }]
+    },
+    {
+      "name": "max",
+      "category": "math",
+      "summary": "Largest of the arguments.",
+      "returns": "Number",
+      "params": [{ "name": "number", "type": "Number", "variadic": true, "required": true }]
+    },
+    {
+      "name": "min",
+      "category": "math",
+      "summary": "Smallest of the arguments.",
+      "returns": "Number",
+      "params": [{ "name": "number", "type": "Number", "variadic": true, "required": true }]
+    },
+    {
+      "name": "count",
+      "category": "math",
+      "summary": "Number of items in a list.",
+      "returns": "Integer",
+      "params": [{ "name": "value", "type": "Any", "required": true }]
+    },
+    {
+      "name": "index",
+      "category": "array",
+      "summary": "Return the item at an index, or a default when out of range.",
+      "returns": "Any",
+      "params": [
+        { "name": "data", "type": "Any", "required": true },
+        { "name": "index", "type": "Any", "required": true },
+        { "name": "default", "type": "Any" }
+      ]
+    },
+    {
+      "name": "append",
+      "category": "array",
+      "summary": "Append values to a list.",
+      "returns": "List",
+      "params": [
+        { "name": "list", "type": "List", "required": true },
+        { "name": "value", "type": "Any", "variadic": true }
+      ]
+    },
+    {
+      "name": "contains",
+      "category": "array",
+      "summary": "True when a list contains a value.",
+      "returns": "Boolean",
+      "params": [
+        { "name": "list", "type": "List", "required": true },
+        { "name": "value", "type": "Any", "required": true }
+      ]
+    },
+    {
+      "name": "joinarray",
+      "category": "array",
+      "summary": "Join a list into text with a separator.",
+      "returns": "Text",
+      "params": [
+        { "name": "array", "type": "List", "required": true },
+        { "name": "separator", "type": "Text" }
+      ]
+    },
+    {
+      "name": "tostring",
+      "category": "conversion",
+      "summary": "Convert a value to text.",
+      "returns": "Text",
+      "params": [{ "name": "value", "type": "Any", "required": true }]
+    },
+    {
+      "name": "tointeger",
+      "category": "conversion",
+      "summary": "Convert a value to an integer.",
+      "returns": "Integer",
+      "params": [{ "name": "value", "type": "Any", "required": true }]
+    },
+    {
+      "name": "todecimal",
+      "category": "conversion",
+      "summary": "Convert a value to a decimal.",
+      "returns": "Decimal",
+      "params": [{ "name": "value", "type": "Any", "required": true }]
+    },
+    {
+      "name": "toboolean",
+      "category": "conversion",
+      "summary": "Convert a value to a boolean.",
+      "returns": "Boolean",
+      "params": [{ "name": "value", "type": "Any", "required": true }]
+    },
+    {
+      "name": "property",
+      "category": "map",
+      "summary": "Read a property from a map or CDT, with a default.",
+      "returns": "Any",
+      "params": [
+        { "name": "value", "type": "Any", "required": true },
+        { "name": "key", "type": "Text", "required": true },
+        { "name": "default", "type": "Any" }
+      ]
+    }
+  ]
+}

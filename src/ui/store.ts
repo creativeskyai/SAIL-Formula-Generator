@@ -1,0 +1,80 @@
+import { create } from 'zustand';
+import { COMPACT, EXPANDED, type SerializeConfig } from '@/core/serialize';
+import type { Preset } from '@/core/recipe';
+import type { DeclaredVariable } from '@/core/types';
+
+export type Mode = 'guided' | 'compose' | 'variables';
+export type Theme = 'light' | 'dark';
+
+const THEME_KEY = 'sailgen.theme';
+
+function readTheme(): Theme {
+  try {
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored === 'light' || stored === 'dark') return stored;
+    if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+  } catch {
+    /* localStorage/matchMedia unavailable */
+  }
+  return 'light';
+}
+
+interface AppState {
+  mode: Mode;
+  selectedRecipeId: string | null;
+  /** Slot values keyed per recipe, so switching recipes preserves input. */
+  valuesByRecipe: Record<string, Record<string, unknown>>;
+  variables: DeclaredVariable[];
+  expanded: boolean;
+  composeText: string;
+  theme: Theme;
+
+  setMode: (m: Mode) => void;
+  selectRecipe: (id: string) => void;
+  setValues: (id: string, values: Record<string, unknown>) => void;
+  addVariable: (v: DeclaredVariable) => void;
+  removeVariable: (index: number) => void;
+  setExpanded: (b: boolean) => void;
+  setComposeText: (t: string) => void;
+  setTheme: (t: Theme) => void;
+  /** Load a validated preset into Guided mode. */
+  loadPresetState: (preset: Preset) => void;
+}
+
+export const useStore = create<AppState>((set) => ({
+  mode: 'guided',
+  selectedRecipeId: null,
+  valuesByRecipe: {},
+  variables: [],
+  expanded: true,
+  composeText: '',
+  theme: readTheme(),
+
+  setMode: (mode) => set({ mode }),
+  selectRecipe: (selectedRecipeId) => set({ selectedRecipeId }),
+  setValues: (id, values) =>
+    set((s) => ({ valuesByRecipe: { ...s.valuesByRecipe, [id]: values } })),
+  addVariable: (v) => set((s) => ({ variables: [...s.variables, v] })),
+  removeVariable: (index) =>
+    set((s) => ({ variables: s.variables.filter((_, i) => i !== index) })),
+  setExpanded: (expanded) => set({ expanded }),
+  setComposeText: (composeText) => set({ composeText }),
+  setTheme: (theme) => {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* ignore */
+    }
+    set({ theme });
+  },
+  loadPresetState: (preset) =>
+    set((s) => ({
+      mode: 'guided',
+      selectedRecipeId: preset.recipeId,
+      valuesByRecipe: { ...s.valuesByRecipe, [preset.recipeId]: preset.slotValues },
+      variables: preset.variables,
+    })),
+}));
+
+export const configFor = (expanded: boolean): SerializeConfig =>
+  expanded ? EXPANDED : COMPACT;
