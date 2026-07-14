@@ -52,7 +52,9 @@ function slotToZod(slot: SlotType): z.ZodTypeAny {
     case 'text':
       return z.string();
     case 'number':
-      return z.number();
+      // Reject NaN and ±Infinity — String(Infinity) is "Infinity", not a
+      // legal SAIL number literal.
+      return z.number().finite();
     case 'boolean':
       return z.boolean();
     case 'enum':
@@ -75,10 +77,13 @@ export function slotsToZodSchema(slots: SlotSpec[]): z.ZodObject<z.ZodRawShape> 
   const shape: z.ZodRawShape = {};
   for (const s of slots) {
     let schema = slotToZod(s.slot);
-    // A required text/expression/ref slot must be non-empty — an empty string
-    // would otherwise serialize to nothing and produce invalid SAIL.
+    // A required text/expression/ref slot must have non-whitespace content — an
+    // empty or all-spaces value would otherwise serialize to nothing (or a
+    // blank argument) and produce invalid SAIL.
     if (s.required && schema instanceof z.ZodString) {
-      schema = schema.min(1, `${s.label} is required`);
+      schema = schema.refine((v) => v.trim().length > 0, {
+        message: `${s.label} is required`,
+      });
     }
     if (s.default !== undefined) schema = schema.default(s.default as never);
     else if (!s.required) schema = schema.optional();

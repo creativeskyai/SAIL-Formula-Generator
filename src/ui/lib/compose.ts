@@ -79,8 +79,11 @@ export function analyzeCompose(text: string): ComposeAnalysis {
   let m: RegExpExecArray | null;
   while ((m = FN_CALL.exec(stripped)) !== null) names.add(m[1]);
   FN_CALL.lastIndex = 0;
-  const unknownFunctions = [...names].filter(
-    (n) => !n.startsWith('rule!') && !catalog.has(n),
-  );
+  const unknownFunctions = [...names].filter((n) => {
+    if (n.startsWith('rule!')) return false; // application rules aren't in the catalog
+    // fn! is a disambiguation prefix for built-in functions; look up the bare name.
+    const bare = n.startsWith('fn!') ? n.slice(3) : n;
+    return !catalog.has(bare);
+  });
   return { balanced, unknownFunctions };
 }
