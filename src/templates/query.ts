@@ -1,6 +1,7 @@
 import { arr, bool, call, kw, num, raw, recordRef, text } from '@/core/builder';
 import type { Recipe } from '@/core/recipe';
 
+// The complete operator set documented for a!queryFilter (Appian 24.4).
 const FILTER_OPERATORS = [
   '=',
   '<>',
@@ -8,13 +9,17 @@ const FILTER_OPERATORS = [
   '>=',
   '<',
   '<=',
+  'between',
   'in',
   'not in',
-  'starts with',
-  'not starts with',
-  'includes',
   'is null',
   'not null',
+  'starts with',
+  'not starts with',
+  'ends with',
+  'not ends with',
+  'includes',
+  'not includes',
 ];
 
 export const queryFilter: Recipe = {

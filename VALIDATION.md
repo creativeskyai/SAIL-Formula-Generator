@@ -20,6 +20,25 @@ syntax error.
 If a row fails for a **syntax** reason, open an issue noting which recipe and the
 exact Appian error — that is a real serializer or catalog bug to fix.
 
+## Documentation validation (automated, against docs.appian.com)
+
+Ahead of the real-editor paste-test, the engine's load-bearing SAIL rules and the
+flagship function signatures were checked against Appian's official documentation
+(24.4 / 26.x). Verified:
+
+- **Arrays** use braces `{}` with comma separators — [Parts of an Expression](https://docs.appian.com/suite/help/24.4/parts-of-an-expression.html). ✓ matches the serializer.
+- **Exponent `^` and unary `-`** are operators; precedence is parens → `^` → `* /` → `+ -`. ✓ matches the precedence table.
+- **`and` / `or` / `not` are functions**, not infix operators — each has a dedicated function page ([and()](https://docs.appian.com/suite/help/24.4/fnc_logical_and.html), [or()](https://docs.appian.com/suite/help/24.4/fnc_logical_or.html)). ✓ matches amendment 2.
+- **`a!queryFilter`** takes `field`, `operator`, `value`, `applyWhen`, and the documented operator set is the 17 values `= <> > >= < <= between in "not in" "is null" "not null" "starts with" "not starts with" "ends with" "not ends with" includes "not includes"` — [a!queryFilter() 24.4](https://docs.appian.com/suite/help/24.4/fnc_system_a_queryfilter.html). The catalog matched; the query-filter recipe's dropdown was **corrected** here to offer the full set (previously missing `between`, `ends with`, `not ends with`, `not includes`).
+
+Not resolvable from the doc pages fetched (so the real-editor paste-test below remains the authority):
+
+- **`""` double-quote escaping** — the docs page doesn't state the escape mechanism; doubling is long-standing Appian behavior and is what the serializer emits. The paste-test confirms it.
+- **`&` precedence** relative to comparisons is unspecified in the docs. The serializer's choice is conservative and does not affect generated output (recipes concatenate via functions / raw expressions, not bare `&` chains).
+- A full signature audit of all 71 catalog functions was not done here — the flagship query/form/logic functions were spot-checked; the rest are covered by the paste-test and the catalog schema check.
+
+## Real-editor paste-test (requires the repo owner)
+
 | # | Recipe | Pass? | Notes |
 |---|--------|:-----:|-------|
 | 1 | query-filter | ☐ | |
