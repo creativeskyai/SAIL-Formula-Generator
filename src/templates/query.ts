@@ -1,0 +1,116 @@
+import { arr, bool, call, kw, num, raw, recordRef, text } from '@/core/builder';
+import type { Recipe } from '@/core/recipe';
+
+const FILTER_OPERATORS = [
+  '=',
+  '<>',
+  '>',
+  '>=',
+  '<',
+  '<=',
+  'in',
+  'not in',
+  'starts with',
+  'not starts with',
+  'includes',
+  'is null',
+  'not null',
+];
+
+export const queryFilter: Recipe = {
+  id: 'query-filter',
+  name: 'Query Filter',
+  category: 'query',
+  description: 'A single filter condition on a record field.',
+  slots: [
+    {
+      id: 'field',
+      label: 'Field',
+      required: true,
+      slot: { type: 'fieldRef' },
+      placeholder: 'recordType!Case.fields.status',
+    },
+    {
+      id: 'operator',
+      label: 'Operator',
+      required: true,
+      slot: { type: 'enum', options: FILTER_OPERATORS },
+      default: '=',
+    },
+    {
+      id: 'value',
+      label: 'Value (expression)',
+      slot: { type: 'expression' },
+      placeholder: '"Open"',
+      help: 'A SAIL expression. Leave empty for is null / not null.',
+    },
+  ],
+  build: (v) =>
+    call('a!queryFilter', [
+      kw('field', recordRef(v.field as string)),
+      kw('operator', text(v.operator as string)),
+      kw('value', v.value ? raw(v.value as string) : null),
+    ]),
+};
+
+export const queryRecordType: Recipe = {
+  id: 'query-record-type',
+  name: 'Query a Record Type',
+  category: 'query',
+  description: 'Retrieve records with optional filters, sort, and paging.',
+  slots: [
+    {
+      id: 'recordType',
+      label: 'Record Type',
+      required: true,
+      slot: { type: 'recordTypeRef' },
+      placeholder: 'recordType!Case',
+    },
+    {
+      id: 'filters',
+      label: 'Filters',
+      slot: { type: 'list', item: { type: 'nestedRecipe', recipeId: 'query-filter' } },
+    },
+    { id: 'batchSize', label: 'Batch Size', slot: { type: 'number' }, default: 100 },
+    { id: 'sortField', label: 'Sort Field', slot: { type: 'fieldRef' } },
+    {
+      id: 'sortAscending',
+      label: 'Sort Ascending',
+      slot: { type: 'boolean' },
+      default: true,
+    },
+  ],
+  build: (v, ctx) => {
+    const filters = (v.filters as Record<string, unknown>[] | undefined) ?? [];
+    const sortField = v.sortField as string | undefined;
+    return call('a!queryRecordType', [
+      kw('recordType', recordRef(v.recordType as string)),
+      kw(
+        'filters',
+        filters.length
+          ? call('a!queryLogicalExpression', [
+              kw('operator', text('AND')),
+              kw('filters', arr(filters.map((f) => ctx.buildRecipe('query-filter', f)))),
+              kw('ignoreFiltersWithEmptyValues', bool(true)),
+            ])
+          : null,
+      ),
+      kw(
+        'pagingInfo',
+        call('a!pagingInfo', [
+          kw('startIndex', num(1)),
+          kw('batchSize', num((v.batchSize as number) ?? 100)),
+          kw(
+            'sort',
+            sortField
+              ? call('a!sortInfo', [
+                  kw('field', recordRef(sortField)),
+                  kw('ascending', bool((v.sortAscending as boolean) ?? true)),
+                ])
+              : null,
+          ),
+        ]),
+      ),
+    ]);
+  },
+};
