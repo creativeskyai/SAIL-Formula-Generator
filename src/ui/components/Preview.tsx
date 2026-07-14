@@ -5,6 +5,15 @@ import { sail } from '../sail-language';
 import { useStore } from '../store';
 import { Button } from './primitives';
 
+// Stable identities so CodeMirror doesn't reconfigure on every keystroke.
+const EXTENSIONS = [sail(), EditorView.lineWrapping];
+const BASIC_SETUP = {
+  lineNumbers: true,
+  foldGutter: false,
+  highlightActiveLine: false,
+  highlightActiveLineGutter: false,
+} as const;
+
 export function Preview({
   code,
   expanded,
@@ -52,13 +61,8 @@ export function Preview({
           editable={false}
           readOnly
           theme={theme}
-          extensions={[sail(), EditorView.lineWrapping]}
-          basicSetup={{
-            lineNumbers: true,
-            foldGutter: false,
-            highlightActiveLine: false,
-            highlightActiveLineGutter: false,
-          }}
+          extensions={EXTENSIONS}
+          basicSetup={BASIC_SETUP}
         />
       </div>
       {hasRecordRef && (

@@ -5,6 +5,7 @@ import { useStore, type Mode } from './store';
 import { GuidedMode } from './modes/GuidedMode';
 import { ComposeMode } from './modes/ComposeMode';
 import { VariablesMode } from './modes/VariablesMode';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const TABS: { id: Mode; label: string }[] = [
   { id: 'guided', label: 'Guided' },
@@ -60,9 +61,11 @@ export default function App() {
       </header>
 
       <main className="min-h-0 flex-1 p-4">
-        {mode === 'guided' && <GuidedMode />}
-        {mode === 'compose' && <ComposeMode />}
-        {mode === 'variables' && <VariablesMode />}
+        <ErrorBoundary key={mode}>
+          {mode === 'guided' && <GuidedMode />}
+          {mode === 'compose' && <ComposeMode />}
+          {mode === 'variables' && <VariablesMode />}
+        </ErrorBoundary>
       </main>
 
       <footer className="border-t border-border px-6 py-2 text-[11px] text-muted-foreground">

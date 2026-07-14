@@ -116,7 +116,10 @@ function SlotInput({ slot, value, onChange, placeholder, variables }: SlotInputP
         </Select>
       );
     case 'list': {
-      const items = (value as unknown[]) ?? [];
+      // Tolerate any value shape — a stale/hand-edited preset may carry a
+      // non-array here; render it as empty rather than crashing on .map, and
+      // let generate()'s zod check surface the mismatch as a build issue.
+      const items = Array.isArray(value) ? value : [];
       return (
         <div className="flex flex-col gap-2">
           {items.map((item, i) => (
@@ -165,7 +168,11 @@ function SlotInput({ slot, value, onChange, placeholder, variables }: SlotInputP
         <div className="rounded-md border border-border/60 bg-muted/30 p-2">
           <SlotForm
             slots={recipe.slots}
-            values={(value as Record<string, unknown>) ?? {}}
+            values={
+              value && typeof value === 'object' && !Array.isArray(value)
+                ? (value as Record<string, unknown>)
+                : {}
+            }
             variables={variables}
             onChange={(v) => onChange(v)}
           />

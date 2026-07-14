@@ -7,6 +7,8 @@ import {
   loadPreset,
   savePreset,
 } from '../lib/presets';
+import { getRecipe } from '@/templates';
+import type { Preset } from '@/core/recipe';
 import { useStore } from '../store';
 import { Button, Select, TextInput } from './primitives';
 
@@ -32,12 +34,21 @@ export function PresetBar({
     setNames(listPresetNames());
   };
 
+  const apply = (preset: Preset): boolean => {
+    if (!getRecipe(preset.recipeId)) {
+      setError(`Preset references an unavailable recipe (${preset.recipeId}).`);
+      return false;
+    }
+    loadPresetState(preset);
+    setError(null);
+    return true;
+  };
+
   const load = (presetName: string) => {
     if (!presetName) return;
     try {
       const preset = loadPreset(presetName);
-      if (preset) loadPresetState(preset);
-      setError(null);
+      if (preset) apply(preset);
     } catch {
       setError(`Preset "${presetName}" is invalid or from an older version.`);
     }
@@ -48,8 +59,7 @@ export function PresetBar({
     e.target.value = '';
     if (!file) return;
     try {
-      loadPresetState(await importPresetFile(file));
-      setError(null);
+      apply(await importPresetFile(file));
     } catch {
       setError('That file is not a valid preset.');
     }

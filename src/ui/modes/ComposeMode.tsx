@@ -8,6 +8,10 @@ import { sail } from '../sail-language';
 import { TextInput } from '../components/primitives';
 import { cn } from '@/lib/utils';
 
+// Stable identities so CodeMirror doesn't reconfigure on every keystroke.
+const EXTENSIONS = [sail(), EditorView.lineWrapping];
+const BASIC_SETUP = { lineNumbers: true, foldGutter: false } as const;
+
 export function ComposeMode() {
   const composeText = useStore((s) => s.composeText);
   const setComposeText = useStore((s) => s.setComposeText);
@@ -76,9 +80,9 @@ export function ComposeMode() {
           <CodeMirror
             value={composeText}
             theme={theme}
-            extensions={[sail(), EditorView.lineWrapping]}
+            extensions={EXTENSIONS}
             onChange={setComposeText}
-            basicSetup={{ lineNumbers: true, foldGutter: false }}
+            basicSetup={BASIC_SETUP}
           />
         </div>
         <div className="flex flex-col gap-1 text-xs">
