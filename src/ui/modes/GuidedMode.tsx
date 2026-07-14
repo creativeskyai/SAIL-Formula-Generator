@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { getRecipe, recipesByCategory } from '@/templates';
 import { computePreview } from '../lib/preview';
 import { configFor, useStore } from '../store';
 import { SlotForm, initialValues } from '../components/SlotForm';
 import { Preview } from '../components/Preview';
+import { PresetBar } from '../components/PresetBar';
 import { Diagnostics } from '../components/Diagnostics';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,18 @@ export function GuidedMode() {
   const hasError = preview
     ? Boolean(preview.buildIssues?.length) || preview.diagnostics.some((d) => d.severity === 'error')
     : true;
+
+  // Cmd/Ctrl+Enter copies the current output when it is valid.
+  const sail = preview?.sail ?? '';
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !hasError && sail && navigator.clipboard) {
+        navigator.clipboard.writeText(sail);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [sail, hasError]);
 
   return (
     <div className="grid h-full grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)] gap-4">
@@ -84,6 +97,7 @@ export function GuidedMode() {
       <section className="flex flex-col gap-3 overflow-y-auto">
         {recipe && preview ? (
           <>
+            <PresetBar recipeId={recipe.id} values={values} />
             <Preview
               code={preview.sail}
               expanded={expanded}

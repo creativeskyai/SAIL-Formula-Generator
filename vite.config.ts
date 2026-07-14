@@ -11,6 +11,24 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (
+              id.includes('codemirror') ||
+              id.includes('@uiw') ||
+              id.includes('@lezer')
+            ) {
+              return 'codemirror';
+            }
+            if (id.includes('react')) return 'react';
+          }
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { catalog } from '@/core/catalog';
 import { cn } from '@/lib/utils';
 import { useStore, type Mode } from './store';
@@ -14,6 +15,12 @@ const TABS: { id: Mode; label: string }[] = [
 export default function App() {
   const mode = useStore((s) => s.mode);
   const setMode = useStore((s) => s.setMode);
+  const theme = useStore((s) => s.theme);
+  const setTheme = useStore((s) => s.setTheme);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -24,21 +31,32 @@ export default function App() {
             Deterministic, offline Appian SAIL — no AI at runtime.
           </p>
         </div>
-        <nav className="flex gap-1 rounded-md border border-border p-0.5">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setMode(t.id)}
-              className={cn(
-                'rounded px-3 py-1 text-sm transition',
-                mode === t.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
+        <div className="flex items-center gap-2">
+          <nav className="flex gap-1 rounded-md border border-border p-0.5">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setMode(t.id)}
+                className={cn(
+                  'rounded px-3 py-1 text-sm transition',
+                  mode === t.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+          <button
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-muted"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            {theme === 'dark' ? '☀' : '☾'}
+          </button>
+        </div>
       </header>
 
       <main className="min-h-0 flex-1 p-4">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { sail } from '../sail-language';
+import { useStore } from '../store';
 import { Button } from './primitives';
 
 export function Preview({
@@ -16,6 +17,7 @@ export function Preview({
   canCopy: boolean;
 }) {
   const [copied, setCopied] = useState(false);
+  const theme = useStore((s) => s.theme);
 
   const copy = async () => {
     if (!code || !navigator.clipboard) return;
@@ -49,6 +51,7 @@ export function Preview({
           value={code}
           editable={false}
           readOnly
+          theme={theme}
           extensions={[sail(), EditorView.lineWrapping]}
           basicSetup={{
             lineNumbers: true,

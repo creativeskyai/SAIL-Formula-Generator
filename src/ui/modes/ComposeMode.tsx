@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 export function ComposeMode() {
   const composeText = useStore((s) => s.composeText);
   const setComposeText = useStore((s) => s.setComposeText);
+  const theme = useStore((s) => s.theme);
   const [query, setQuery] = useState('');
 
   const matches = useMemo(() => {
@@ -74,6 +75,7 @@ export function ComposeMode() {
         <div className="min-h-0 flex-1 overflow-auto rounded-md border border-border text-sm">
           <CodeMirror
             value={composeText}
+            theme={theme}
             extensions={[sail(), EditorView.lineWrapping]}
             onChange={setComposeText}
             basicSetup={{ lineNumbers: true, foldGutter: false }}

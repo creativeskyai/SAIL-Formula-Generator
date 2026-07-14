@@ -47,6 +47,9 @@ export function Diagnostics({
         {diagnostics.map((d, i) => (
           <li key={i} className={SEVERITY_STYLE[d.severity]}>
             <span className="font-semibold">{SEVERITY_LABEL[d.severity]}:</span> {d.message}
+            {d.path.length > 0 && (
+              <span className="text-muted-foreground"> · at {d.path.join(' › ')}</span>
+            )}
           </li>
         ))}
       </ul>
