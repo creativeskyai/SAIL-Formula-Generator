@@ -41,7 +41,7 @@ Because the target is structured and finite per function, a form-driven builder 
 | **Compose** | A searchable catalog browser inserts skeleton snippets into a free-text editor, validated by bracket balance + function-name recognition. | Catalog + string-aware analyzer |
 | **Variables** | Declare `ri!` / `local!` variables with types; they feed the Guided reference suggestions and resolve the validator's unresolved-reference check. | Validator scope |
 
-Cross-cutting: live preview on every change, compact/expanded formatting toggle, copy disabled on error diagnostics, a record-reference re-linking caveat near Copy, preset save/load (localStorage + JSON file, schema-validated on import), SAIL syntax highlighting, and dark mode.
+Cross-cutting: a **record-type reference** you paste once (or fill with a sample dummy UUID) that prefills the record-type slot; live preview on every change; compact/expanded formatting toggle; copy disabled on error diagnostics; a record-reference re-linking caveat near Copy; preset save/load (localStorage + JSON file, schema-validated on import); SAIL syntax highlighting; and dark mode.
 
 ## How it works
 

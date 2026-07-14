@@ -1,11 +1,12 @@
 import { useEffect, useMemo } from 'react';
 import { getRecipe, recipesByCategory } from '@/templates';
 import { computePreview } from '../lib/preview';
-import { configFor, useStore } from '../store';
+import { configFor, SAMPLE_RECORD_TYPE_REF, useStore } from '../store';
 import { SlotForm, initialValues } from '../components/SlotForm';
 import { Preview } from '../components/Preview';
 import { PresetBar } from '../components/PresetBar';
 import { Diagnostics } from '../components/Diagnostics';
+import { Button, TextInput } from '../components/primitives';
 import { cn } from '@/lib/utils';
 
 export function GuidedMode() {
@@ -16,15 +17,17 @@ export function GuidedMode() {
   const variables = useStore((s) => s.variables);
   const expanded = useStore((s) => s.expanded);
   const setExpanded = useStore((s) => s.setExpanded);
+  const recordTypeRef = useStore((s) => s.recordTypeRef);
+  const setRecordTypeRef = useStore((s) => s.setRecordTypeRef);
 
   const groups = recipesByCategory();
   const recipe = selectedRecipeId ? getRecipe(selectedRecipeId) : undefined;
   const values = useMemo(
     () =>
       recipe
-        ? (valuesByRecipe[recipe.id] ?? initialValues(recipe.slots))
+        ? (valuesByRecipe[recipe.id] ?? initialValues(recipe.slots, recordTypeRef))
         : ({} as Record<string, unknown>),
-    [recipe, valuesByRecipe],
+    [recipe, valuesByRecipe, recordTypeRef],
   );
 
   const preview = useMemo(
@@ -49,8 +52,35 @@ export function GuidedMode() {
   }, [sail, hasError]);
 
   return (
-    <div className="grid h-full grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)] gap-4">
-      <nav className="flex flex-col gap-3 overflow-y-auto border-r border-border pr-3">
+    <div className="flex h-full flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+        <span className="text-xs font-medium text-muted-foreground">Record type reference</span>
+        <TextInput
+          className="min-w-[240px] flex-1 font-mono"
+          placeholder="recordType!{uuid}Case — paste your environment's copied reference"
+          value={recordTypeRef}
+          onChange={(e) => setRecordTypeRef(e.target.value)}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setRecordTypeRef(SAMPLE_RECORD_TYPE_REF)}
+        >
+          Use sample
+        </Button>
+        {recordTypeRef && (
+          <Button type="button" variant="ghost" onClick={() => setRecordTypeRef('')}>
+            Clear
+          </Button>
+        )}
+        <p className="w-full text-[11px] text-muted-foreground/80">
+          Prefills the record-type slot when you pick a scenario. Field references carry their own
+          UUIDs, so edit those per field. &ldquo;Use sample&rdquo; inserts a dummy UUID so you can
+          test generation without a real environment.
+        </p>
+      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)] gap-4">
+        <nav className="flex flex-col gap-3 overflow-y-auto border-r border-border pr-3">
         {Object.entries(groups).map(([category, list]) => (
           <div key={category} className="flex flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -108,6 +138,7 @@ export function GuidedMode() {
           </>
         ) : null}
       </section>
+      </div>
     </div>
   );
 }

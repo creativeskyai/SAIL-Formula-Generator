@@ -13,10 +13,15 @@ import { Button, Field, Select, TextInput } from './primitives';
 
 /** Seed a values object with each slot's default (and enum first-option), so
  * forms show sensible starting values rather than blanks. */
-export function initialValues(slots: SlotSpec[]): Record<string, unknown> {
+export function initialValues(
+  slots: SlotSpec[],
+  recordTypeRef?: string,
+): Record<string, unknown> {
   const values: Record<string, unknown> = {};
   for (const s of slots) {
     if (s.default !== undefined) values[s.id] = s.default;
+    // Prefill record-type references from the global setting the user pasted.
+    else if (s.slot.type === 'recordTypeRef' && recordTypeRef) values[s.id] = recordTypeRef;
     // Seed a first-option only for REQUIRED enums; an optional enum must be
     // omittable, so it starts unset (and offers a "(none)" choice).
     else if (s.slot.type === 'enum' && s.required) values[s.id] = s.slot.options[0];
