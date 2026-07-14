@@ -63,7 +63,10 @@ export const localVariables: Recipe = {
   build: (v) => {
     const names = (v.names as string[] | undefined) ?? [];
     const values = (v.values as string[] | undefined) ?? [];
-    const decls = names.map((n, i) => kw(`local!${n}`, raw(values[i] ?? 'null')));
+    const decls = names
+      .map((n, i) => ({ name: (n ?? '').trim(), value: (values[i] ?? '').trim() }))
+      .filter((d) => d.name !== '')
+      .map((d) => kw(`local!${d.name}`, raw(d.value === '' ? 'null' : d.value)));
     return call('a!localVariables', [...decls, pos(raw(v.body as string))]);
   },
 };

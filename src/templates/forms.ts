@@ -90,10 +90,15 @@ export const dropdownField: Recipe = {
   build: (v) => {
     const labels = (v.choiceLabels as string[] | undefined) ?? [];
     const values = (v.choiceValues as string[] | undefined) ?? [];
+    // Labels and values are positionally paired; drop any incomplete pair so
+    // the two arrays stay aligned and no empty element is emitted.
+    const pairs = labels
+      .map((l, i) => ({ label: (l ?? '').trim(), value: (values[i] ?? '').trim() }))
+      .filter((p) => p.label !== '' && p.value !== '');
     return call('a!dropdownField', [
       kw('label', text(v.label as string)),
-      kw('choiceLabels', labels.length ? arr(labels.map(text)) : null),
-      kw('choiceValues', values.length ? arr(values.map((s) => raw(s))) : null),
+      kw('choiceLabels', pairs.length ? arr(pairs.map((p) => text(p.label))) : null),
+      kw('choiceValues', pairs.length ? arr(pairs.map((p) => raw(p.value))) : null),
       kw('value', v.value ? parseRef(v.value as string) : null),
       kw('saveInto', v.saveInto ? parseRef(v.saveInto as string) : null),
       kw('required', v.required ? bool(true) : null),
@@ -116,7 +121,9 @@ export const sectionLayout: Recipe = {
     },
   ],
   build: (v) => {
-    const contents = (v.contents as string[] | undefined) ?? [];
+    const contents = ((v.contents as string[] | undefined) ?? [])
+      .map((s) => (s ?? '').trim())
+      .filter((s) => s !== '');
     return call('a!sectionLayout', [
       kw('label', v.label ? text(v.label as string) : null),
       kw('contents', contents.length ? arr(contents.map((s) => raw(s))) : null),

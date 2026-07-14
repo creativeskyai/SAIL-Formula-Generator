@@ -75,6 +75,11 @@ export function slotsToZodSchema(slots: SlotSpec[]): z.ZodObject<z.ZodRawShape> 
   const shape: z.ZodRawShape = {};
   for (const s of slots) {
     let schema = slotToZod(s.slot);
+    // A required text/expression/ref slot must be non-empty — an empty string
+    // would otherwise serialize to nothing and produce invalid SAIL.
+    if (s.required && schema instanceof z.ZodString) {
+      schema = schema.min(1, `${s.label} is required`);
+    }
     if (s.default !== undefined) schema = schema.default(s.default as never);
     else if (!s.required) schema = schema.optional();
     shape[s.id] = schema;

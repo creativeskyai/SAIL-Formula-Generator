@@ -23,6 +23,13 @@ export function isRawTextBalanced(text: string): boolean {
   let i = 0;
   while (i < text.length) {
     const c = text[i];
+    if (c === '/' && text[i + 1] === '*') {
+      // Skip a /* ... */ block comment; brackets inside it are not code.
+      i += 2;
+      while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) i++;
+      i += 2; // step past the closing */ (or past end if unterminated)
+      continue;
+    }
     if (c === '"') {
       i++;
       let closed = false;
