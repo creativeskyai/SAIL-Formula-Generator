@@ -215,6 +215,41 @@ describe('line breaking (amendment 8, greedy)', () => {
   });
 });
 
+describe('number literals never use scientific notation (SAIL grammar)', () => {
+  it('small magnitude expands to plain decimal', () => {
+    expect(serialize(num(0.0000001), COMPACT)).toBe('0.0000001');
+    expect(serialize(num(1e-7), COMPACT)).toBe('0.0000001');
+  });
+  it('large magnitude expands to plain integer', () => {
+    expect(serialize(num(1e21), COMPACT)).toBe('1000000000000000000000');
+    expect(serialize(num(1.5e21), COMPACT)).toBe('1500000000000000000000');
+  });
+  it('negative small magnitude', () => {
+    expect(serialize(num(-2.3e-8), COMPACT)).toBe('-0.000000023');
+  });
+  it('ordinary numbers are unaffected', () => {
+    expect(serialize(num(3.14), COMPACT)).toBe('3.14');
+    expect(serialize(num(1000000), COMPACT)).toBe('1000000');
+  });
+});
+
+describe('line breaking accounts for the trailing separator comma', () => {
+  it('a non-final inline value plus its comma is not left one column over width', () => {
+    // Outer flat "f(a: g(x: 1), bb: 2)" is 20 chars -> f breaks. Arg `a` sits at
+    // col 5; g's flat "g(x: 1)" is 7 (5+7=12 fits) but the comma after it would
+    // push the line to 13, so g must break too.
+    const node = call('f', [
+      kw('a', call('g', [kw('x', num(1))])),
+      kw('bb', num(2)),
+    ]);
+    const out = at(node, 12);
+    expect(out).toBe(
+      ['f(', '  a: g(', '    x: 1', '  ),', '  bb: 2', ')'].join('\n'),
+    );
+    expect(Math.max(...out.split('\n').map((l) => l.length))).toBeLessThanOrEqual(12);
+  });
+});
+
 describe('golden: a!queryRecordType (nested filters + paging + sort)', () => {
   const query: SailNode = call('a!queryRecordType', [
     kw('recordType', recordRef('recordType!Case')),

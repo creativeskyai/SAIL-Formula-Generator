@@ -36,6 +36,34 @@ function serializeString(s: string): string {
   return `"${s.replace(/"/g, '""')}"`;
 }
 
+/** Expand JS exponential notation ("1e-7", "1.5e+21") to plain decimal, since
+ * SAIL number literals have no exponent form. Preserves every significant digit
+ * from the source string (no rounding). */
+function expandExponential(s: string): string {
+  const m = /^(-?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/.exec(s);
+  if (!m) return s;
+  const [, sign, intPart, fracPart = '', expStr] = m;
+  const exp = parseInt(expStr, 10);
+  const digits = intPart + fracPart;
+  const pointPos = intPart.length + exp;
+  let out: string;
+  if (pointPos <= 0) {
+    out = '0.' + '0'.repeat(-pointPos) + digits;
+  } else if (pointPos >= digits.length) {
+    out = digits + '0'.repeat(pointPos - digits.length);
+  } else {
+    out = digits.slice(0, pointPos) + '.' + digits.slice(pointPos);
+  }
+  if (out.includes('.')) out = out.replace(/0+$/, '').replace(/\.$/, '');
+  return sign + out;
+}
+
+/** Serialize a numeric literal as a SAIL-legal decimal token (never exponential). */
+function formatNumber(n: number): string {
+  const s = String(n);
+  return /[eE]/.test(s) ? expandExponential(s) : s;
+}
+
 // --- Operator precedence -----------------------------------------------------
 // Higher binds tighter. Comparisons loosest, `^` tightest, unary `-` above all
 // binary operators (amendment 2). `&` (concat) sits between `+ -` and
@@ -100,11 +128,23 @@ export function serialize(node: SailNode, config: SerializeConfig = EXPANDED): s
   const pad = (level: number): string => ' '.repeat(level * indent);
 
   // --- Flat (single-line) rendering ------------------------------------------
+  // Memoized per node so a node's single-line string is built at most once,
+  // even though `render` measures it at every non-fitting ancestor level.
+  const flatMemo = new WeakMap<SailNode, string>();
   function flat(node: SailNode): string {
+    const cached = flatMemo.get(node);
+    if (cached !== undefined) return cached;
+    const result = computeFlat(node);
+    flatMemo.set(node, result);
+    return result;
+  }
+
+  function computeFlat(node: SailNode): string {
     switch (node.kind) {
       case 'lit':
         if (node.type === 'Text') return serializeString(node.value as string);
         if (node.type === 'Null') return 'null';
+        if (node.type === 'Number') return formatNumber(node.value as number);
         return String(node.value);
       case 'var':
         return `${node.domain}!${node.name}`;
@@ -159,18 +199,26 @@ export function serialize(node: SailNode, config: SerializeConfig = EXPANDED): s
   }
 
   // --- Greedy rendering with line breaks -------------------------------------
-  function render(node: SailNode, col: number, level: number): string {
+  // `tail` is the number of characters that will follow this node on the same
+  // line if it stays inline (e.g. a trailing separator comma, or `.field` after
+  // a dot target). Counting it in the fit test keeps a node from staying inline
+  // when the whole line — value plus its tail — would exceed maxWidth.
+  function render(node: SailNode, col: number, level: number, tail: number): string {
     const single = flat(node);
-    if (col + single.length <= maxWidth) return single;
+    if (col + single.length + tail <= maxWidth) return single;
+
+    // A trailing comma follows every broken child except the last.
+    const commaTail = (i: number, count: number): number => (i < count - 1 ? 1 : 0);
 
     switch (node.kind) {
       case 'call': {
         if (node.args.length === 0) return single;
         const inner = pad(level + 1);
-        const lines = node.args.map((a) => {
+        const lines = node.args.map((a, i) => {
           const prefix = a.name ? `${a.name}: ` : '';
           const valueCol = inner.length + prefix.length;
-          return inner + prefix + render(a.value as SailNode, valueCol, level + 1);
+          const t = commaTail(i, node.args.length);
+          return inner + prefix + render(a.value as SailNode, valueCol, level + 1, t);
         });
         return `${node.fn}(\n${lines.join(',\n')}\n${pad(level)})`;
       }
@@ -178,29 +226,33 @@ export function serialize(node: SailNode, config: SerializeConfig = EXPANDED): s
         if (node.items.length === 0) return single;
         const inner = pad(level + 1);
         const lines = node.items.map(
-          (it) => inner + render(it, inner.length, level + 1),
+          (it, i) =>
+            inner + render(it, inner.length, level + 1, commaTail(i, node.items.length)),
         );
         return `{\n${lines.join(',\n')}\n${pad(level)}}`;
       }
       case 'map': {
         if (node.entries.length === 0) return single;
         const inner = pad(level + 1);
-        const lines = node.entries.map((e) => {
+        const lines = node.entries.map((e, i) => {
           const prefix = `${e.key}: `;
           const valueCol = inner.length + prefix.length;
-          return inner + prefix + render(e.value, valueCol, level + 1);
+          const t = commaTail(i, node.entries.length);
+          return inner + prefix + render(e.value, valueCol, level + 1, t);
         });
         return `a!map(\n${lines.join(',\n')}\n${pad(level)})`;
       }
       case 'dot': {
         if (isBreakable(node.target)) {
-          return `${render(node.target, col, level)}.${node.field}`;
+          const t = tail + 1 + node.field.length; // ".field" plus outer tail
+          return `${render(node.target, col, level, t)}.${node.field}`;
         }
         return single;
       }
       case 'index': {
         if (isBreakable(node.target)) {
-          return `${render(node.target, col, level)}[${flat(node.index)}]`;
+          const t = tail + 2 + flat(node.index).length; // "[index]" plus outer tail
+          return `${render(node.target, col, level, t)}[${flat(node.index)}]`;
         }
         return single;
       }
@@ -214,5 +266,5 @@ export function serialize(node: SailNode, config: SerializeConfig = EXPANDED): s
     return node.kind === 'call' || node.kind === 'array' || node.kind === 'map';
   }
 
-  return render(node, 0, 0);
+  return render(node, 0, 0, 0);
 }
