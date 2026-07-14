@@ -1,5 +1,10 @@
 # Empirical Validation Checklist
 
+> **Status: PASSED.** All 11 seed-recipe outputs were paste-tested in a real
+> Appian editor and parse as valid SAIL. The only editor-side step is re-linking
+> the symbolic `recordType!…` references to the environment's UUID-qualified
+> ones (expected — see amendment 5).
+
 **Why this file exists (PLAN.md amendment 13):** the serializer and recipes are
 snapshot-tested, but snapshots only prove the output is *stable* — not that it
 is *accepted by Appian*. A systematic serializer error would be snapshot-tested
@@ -37,21 +42,27 @@ Not resolvable from the doc pages fetched (so the real-editor paste-test below r
 - **`&` precedence** relative to comparisons is unspecified in the docs. The serializer's choice is conservative and does not affect generated output (recipes concatenate via functions / raw expressions, not bare `&` chains).
 - A full signature audit of all 71 catalog functions was not done here — the flagship query/form/logic functions were spot-checked; the rest are covered by the paste-test and the catalog schema check.
 
-## Real-editor paste-test (requires the repo owner)
+## Real-editor paste-test (completed — passed)
+
+**Result — passed (repo owner, Appian editor).** All 11 seed-recipe outputs
+parse as valid SAIL. The only adjustment needed is replacing the symbolic
+`recordType!Case…` references with the environment's real UUID-qualified record
+references — the expected re-linking noted below and in amendment 5, not a
+serializer defect.
 
 | # | Recipe | Pass? | Notes |
 |---|--------|:-----:|-------|
-| 1 | query-filter | ☐ | |
-| 2 | query-record-type (nested filters + sort) | ☐ | |
-| 3 | query-record-type (minimal) | ☐ | |
-| 4 | text-field | ☐ | |
-| 5 | integer-field | ☐ | |
-| 6 | dropdown-field | ☐ | |
-| 7 | section-layout | ☐ | |
-| 8 | if-else | ☐ | |
-| 9 | local-variables | ☐ | |
-| 10 | for-each | ☐ | |
-| 11 | required-validation (a!validationMessage) | ☐ | |
+| 1 | query-filter | ✅ | Re-link `recordType!Case.fields.status` to the env's record reference |
+| 2 | query-record-type (nested filters + sort) | ✅ | Re-link the `recordType!Case…` references |
+| 3 | query-record-type (minimal) | ✅ | Re-link the `recordType!Case` reference |
+| 4 | text-field | ✅ | |
+| 5 | integer-field | ✅ | |
+| 6 | dropdown-field | ✅ | |
+| 7 | section-layout | ✅ | |
+| 8 | if-else | ✅ | |
+| 9 | local-variables | ✅ | |
+| 10 | for-each | ✅ | |
+| 11 | required-validation (a!validationMessage) | ✅ | |
 
 ---
 
