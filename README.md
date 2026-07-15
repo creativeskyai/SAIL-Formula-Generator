@@ -56,7 +56,7 @@ flowchart TD
     SER["<b>4 · Serializer</b> — AST → formatted SAIL (deterministic)"]
     BLD["<b>3 · Builder API</b> — pure AST constructors, null-arg pruning"]
     AST["<b>2 · AST + type system</b> — node types, SAIL type enum"]
-    CAT["<b>1 · Catalog</b> — 71 typed FunctionSpecs"]
+    CAT["<b>1 · Catalog</b> — 74 typed FunctionSpecs"]
 
     UI --> REG --> REC
     REC --> SER
@@ -116,7 +116,7 @@ The build is gated by CI (typecheck + catalog schema-check + tests + build) and 
 
 ## Stack
 
-Vite · React 19 · TypeScript (strict) · Tailwind v4 · Zustand · CodeMirror 6 · Zod · Vitest. Client-only, static build.
+Vite · React 19 · TypeScript (strict) · Tailwind v4 · Zustand · CodeMirror 6 · Zod · Vitest · Lucide icons · Space Grotesk / Geist Mono (self-hosted via `@fontsource`, no CDN). Client-only, static build, fully offline.
 
 ## License
 
