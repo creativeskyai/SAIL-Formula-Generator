@@ -72,9 +72,9 @@ describe('Guided mode acceptance flow', () => {
 
   it('mode tabs switch panels', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Compose' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Compose' }));
     expect(screen.getByPlaceholderText('Search functions…')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Variables' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Variables' }));
     expect(screen.getByRole('button', { name: 'Add' })).toBeInTheDocument();
   });
 });

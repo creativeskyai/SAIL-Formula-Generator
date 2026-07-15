@@ -39,14 +39,14 @@ export function ComposeMode() {
   };
 
   return (
-    <div className="grid h-full grid-cols-[300px_minmax(0,1fr)] gap-4">
-      <div className="flex flex-col gap-2 overflow-hidden border-r border-border pr-3">
+    <div className="grid min-h-full grid-cols-1 gap-4 lg:h-full lg:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="flex flex-col gap-2 lg:overflow-hidden lg:border-r lg:border-border lg:pr-3">
         <TextInput
           placeholder="Search functions…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <div className="flex flex-col gap-3 overflow-y-auto">
+        <div className="flex flex-col gap-3 lg:overflow-y-auto">
           {Object.entries(matches).map(([category, list]) => (
             <div key={category} className="flex flex-col gap-1">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -58,7 +58,7 @@ export function ComposeMode() {
                   type="button"
                   onClick={() => insert(f)}
                   title={f.summary}
-                  className="rounded px-2 py-1 text-left font-mono text-xs transition hover:bg-muted"
+                  className="px-2 py-1 text-left font-mono text-xs hover:bg-muted"
                 >
                   {f.name}
                 </button>
@@ -71,12 +71,12 @@ export function ComposeMode() {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-col gap-2">
+      <div className="flex flex-col gap-2 lg:min-h-0">
         <p className="text-xs text-muted-foreground">
           Click a function to insert a skeleton, then edit freely. Validation checks bracket
           balance and function names only — the full tree editor is post-MVP.
         </p>
-        <div className="min-h-0 flex-1 overflow-auto rounded-md border border-border text-sm">
+        <div className="min-h-[300px] overflow-auto border border-border text-sm lg:min-h-0 lg:flex-1">
           <CodeMirror
             value={composeText}
             theme={theme}

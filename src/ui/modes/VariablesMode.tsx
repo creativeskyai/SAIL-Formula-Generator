@@ -43,7 +43,7 @@ export function VariablesMode() {
         </p>
       </div>
 
-      <div className="grid grid-cols-[110px_1fr_150px_auto] items-end gap-2">
+      <div className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[110px_1fr_150px_auto]">
         <Field label="Domain">
           <Select value={domain} onChange={(e) => setDomain(e.target.value as VarDomain)}>
             {DECLARABLE_DOMAINS.map((d) => (
@@ -83,7 +83,7 @@ export function VariablesMode() {
           {variables.map((v, i) => (
             <li
               key={`${v.domain}!${v.name}-${i}`}
-              className="flex items-center justify-between rounded-md border border-border px-3 py-1.5"
+              className="flex items-center justify-between border border-border px-3 py-1.5"
             >
               <span className="font-mono text-sm">
                 {v.domain}!{v.name}

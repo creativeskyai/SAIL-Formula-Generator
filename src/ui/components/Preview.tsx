@@ -55,11 +55,11 @@ export function Preview({
             disabled={!canCopy || !code}
             title={canCopy ? undefined : 'Resolve errors before copying'}
           >
-            {copied ? 'Copied' : 'Copy'}
+            <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
           </Button>
         </div>
       </div>
-      <div className="overflow-hidden rounded-md border border-border text-sm">
+      <div className="overflow-hidden border border-border text-sm">
         <CodeMirror
           value={code}
           editable={false}

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Moon, Sun } from 'lucide-react';
 import { catalog } from '@/core/catalog';
 import { cn } from '@/lib/utils';
 import { useStore, type Mode } from './store';
@@ -25,7 +26,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="flex items-center justify-between border-b border-border px-6 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-border px-6 py-3">
         <div>
           <h1 className="text-base font-semibold">SAIL Formula Generator</h1>
           <p className="text-xs text-muted-foreground">
@@ -33,14 +34,16 @@ export default function App() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <nav className="flex gap-1 rounded-md border border-border p-0.5">
+          <nav role="tablist" aria-label="Mode" className="flex gap-1 border border-border p-0.5">
             {TABS.map((t) => (
               <button
                 key={t.id}
                 type="button"
+                role="tab"
+                aria-selected={mode === t.id}
                 onClick={() => setMode(t.id)}
                 className={cn(
-                  'rounded px-3 py-1 text-sm transition',
+                  'px-3 py-1 text-sm',
                   mode === t.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
                 )}
               >
@@ -51,16 +54,16 @@ export default function App() {
           <button
             type="button"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-muted"
+            className="flex h-8 w-8 shrink-0 items-center justify-center border border-border hover:bg-muted"
             aria-label="Toggle dark mode"
             title="Toggle dark mode"
           >
-            {theme === 'dark' ? '☀' : '☾'}
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 p-4">
+      <main className="min-h-0 flex-1 overflow-y-auto p-4">
         <ErrorBoundary key={mode}>
           {mode === 'guided' && <GuidedMode />}
           {mode === 'compose' && <ComposeMode />}

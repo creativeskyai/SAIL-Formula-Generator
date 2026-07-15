@@ -20,7 +20,7 @@ beforeEach(() => {
 describe('Compose mode', () => {
   it('inserting a catalog function appends its skeleton to the pane', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Compose' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Compose' }));
     fireEvent.change(screen.getByPlaceholderText('Search functions…'), {
       target: { value: 'pagingInfo' },
     });
@@ -33,7 +33,7 @@ describe('Compose mode', () => {
 describe('Variables manager', () => {
   it('adds and removes a declared variable', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Variables' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Variables' }));
     fireEvent.change(screen.getByPlaceholderText('caseId'), { target: { value: 'caseId' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add' }));
 
@@ -48,7 +48,7 @@ describe('Variables manager', () => {
 
   it('rejects a non-identifier variable name and does not add it', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Variables' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Variables' }));
     fireEvent.change(screen.getByPlaceholderText('caseId'), { target: { value: '1id' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add' }));
     expect(screen.getByText(/valid identifier/i)).toBeInTheDocument();
