@@ -56,7 +56,15 @@ export function PresetBar({
     if (!presetName) return;
     try {
       const preset = loadPreset(presetName);
-      if (preset) apply(preset);
+      if (preset) {
+        apply(preset);
+      } else {
+        // Gone from storage (e.g. deleted in another tab) — don't leave the
+        // select claiming a load that never happened.
+        setError(`Preset "${presetName}" no longer exists.`);
+        setSelected('');
+        setNames(listPresetNames());
+      }
     } catch {
       setError(`Preset "${presetName}" is invalid or from an older version.`);
     }

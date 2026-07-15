@@ -176,9 +176,22 @@ export const useStore = create<AppState>((set) => ({
     })),
 }));
 
-// Persist the working session on every change, so a reload (or accidental tab
-// close) restores exactly where the user left off.
-useStore.subscribe((s) => persistSession(s));
+// Persist the working session so a reload (or accidental tab close) restores
+// exactly where the user left off. Only session-field changes write — a
+// non-session change (e.g. a theme toggle in a second, stale tab) must not
+// clobber what another tab has persisted since this one loaded.
+useStore.subscribe((s, prev) => {
+  if (
+    s.mode !== prev.mode ||
+    s.selectedRecipeId !== prev.selectedRecipeId ||
+    s.valuesByRecipe !== prev.valuesByRecipe ||
+    s.variables !== prev.variables ||
+    s.expanded !== prev.expanded ||
+    s.composeText !== prev.composeText
+  ) {
+    persistSession(s);
+  }
+});
 
 export const configFor = (expanded: boolean): SerializeConfig =>
   expanded ? EXPANDED : COMPACT;
