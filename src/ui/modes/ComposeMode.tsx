@@ -5,7 +5,7 @@ import { catalog, type FunctionSpec } from '@/core/catalog';
 import { useStore } from '../store';
 import { analyzeCompose, buildSkeleton } from '../lib/compose';
 import { sail } from '../sail-language';
-import { TextInput } from '../components/primitives';
+import { Button, TextInput } from '../components/primitives';
 import { cn } from '@/lib/utils';
 
 // Stable identities so CodeMirror doesn't reconfigure on every keystroke.
@@ -53,15 +53,16 @@ export function ComposeMode() {
                 {category}
               </span>
               {list.map((f) => (
-                <button
+                <Button
                   key={f.name}
                   type="button"
+                  variant="ghost"
                   onClick={() => insert(f)}
                   title={f.summary}
-                  className="px-2 py-1 text-left font-mono text-xs hover:bg-muted"
+                  className="justify-start px-2 py-1 text-left font-mono text-xs font-normal"
                 >
                   {f.name}
-                </button>
+                </Button>
               ))}
             </div>
           ))}

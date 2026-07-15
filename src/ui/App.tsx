@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { catalog } from '@/core/catalog';
-import { cn } from '@/lib/utils';
+import { Button } from './components/primitives';
 import { useStore, type Mode } from './store';
 import { GuidedMode } from './modes/GuidedMode';
 import { ComposeMode } from './modes/ComposeMode';
@@ -19,10 +19,29 @@ export default function App() {
   const setMode = useStore((s) => s.setMode);
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
+  const tablistRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
+
+  // ARIA tabs keyboard contract: roving tabindex, Left/Right/Home/End move
+  // both focus and the active panel (selection follows focus).
+  const onTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    const idx = TABS.findIndex((t) => t.id === mode);
+    let next: number | null = null;
+    if (e.key === 'ArrowRight') next = (idx + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = TABS.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    const nextTab = TABS[next];
+    setMode(nextTab.id);
+    tablistRef.current
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+      [next]?.focus();
+  };
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -34,36 +53,50 @@ export default function App() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <nav role="tablist" aria-label="Mode" className="flex gap-1 border border-border p-0.5">
+          <nav
+            ref={tablistRef}
+            role="tablist"
+            aria-label="Mode"
+            className="flex gap-1 border border-border p-0.5"
+          >
             {TABS.map((t) => (
-              <button
+              <Button
                 key={t.id}
                 type="button"
+                variant={mode === t.id ? 'solid' : 'ghost'}
+                id={`tab-${t.id}`}
                 role="tab"
                 aria-selected={mode === t.id}
+                aria-controls={`panel-${t.id}`}
+                tabIndex={mode === t.id ? 0 : -1}
                 onClick={() => setMode(t.id)}
-                className={cn(
-                  'px-3 py-1 text-sm',
-                  mode === t.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
-                )}
+                onKeyDown={onTabKeyDown}
+                className="px-3 py-1 text-sm"
               >
                 {t.label}
-              </button>
+              </Button>
             ))}
           </nav>
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex h-8 w-8 shrink-0 items-center justify-center border border-border hover:bg-muted"
+            className="h-8 w-8 border-border px-0"
             aria-label="Toggle dark mode"
             title="Toggle dark mode"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
+          </Button>
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto p-4">
+      <main
+        id={`panel-${mode}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${mode}`}
+        tabIndex={0}
+        className="min-h-0 flex-1 overflow-y-auto p-4"
+      >
         <ErrorBoundary key={mode}>
           {mode === 'guided' && <GuidedMode />}
           {mode === 'compose' && <ComposeMode />}

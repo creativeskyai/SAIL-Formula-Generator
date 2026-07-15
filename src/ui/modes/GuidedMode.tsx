@@ -93,18 +93,19 @@ export function GuidedMode() {
               {category}
             </span>
             {list.map((r) => (
-              <button
+              <Button
                 key={r.id}
                 type="button"
+                variant="ghost"
                 aria-current={r.id === selectedRecipeId ? 'true' : undefined}
                 onClick={() => selectRecipe(r.id)}
                 className={cn(
-                  'px-2 py-1 text-left text-sm hover:bg-muted',
-                  r.id === selectedRecipeId && 'bg-muted font-medium',
+                  'justify-start px-2 py-1 text-left text-sm',
+                  r.id === selectedRecipeId ? 'bg-muted font-medium' : 'font-normal',
                 )}
               >
                 {r.name}
-              </button>
+              </Button>
             ))}
           </div>
         ))}

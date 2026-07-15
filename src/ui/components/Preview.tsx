@@ -55,9 +55,14 @@ export function Preview({
             disabled={!canCopy || !code}
             title={canCopy ? undefined : 'Resolve errors before copying'}
           >
-            <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
+            {copied ? 'Copied' : 'Copy'}
           </Button>
         </div>
+        {/* Separate live region (not the button's accessible name) so the 1.5s
+         * revert to idle announces nothing — only the copy action itself does. */}
+        <span className="sr-only" role="status" aria-live="polite">
+          {copied ? 'Copied to clipboard' : ''}
+        </span>
       </div>
       <div className="overflow-hidden border border-border text-sm">
         <CodeMirror
