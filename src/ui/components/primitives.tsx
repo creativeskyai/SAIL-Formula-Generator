@@ -38,16 +38,13 @@ export function Button({
   );
 }
 
+/** Shared field-surface classes, so the TextInput primitive and the custom
+ * VariableCombobox input stay pixel-identical. */
+export const inputBase =
+  'w-full border border-border-strong bg-surface px-2.5 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70';
+
 export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className={cn(
-        'w-full border border-border-strong bg-surface px-2.5 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70',
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <input className={cn(inputBase, className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {

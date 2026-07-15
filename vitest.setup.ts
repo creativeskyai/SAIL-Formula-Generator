@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom/vitest';
 
+// jsdom doesn't implement scrollIntoView; stub it so components that call it
+// during keyboard navigation (e.g. VariableCombobox) don't emit "Not
+// implemented" noise or throw in tests.
+Element.prototype.scrollIntoView = () => {};
+
 // Node >= 22 ships an experimental global `localStorage` that is a broken stub
 // unless --localstorage-file is passed, and it shadows jsdom's working
 // implementation (it even ends up as `window.localStorage` in the test env).

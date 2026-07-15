@@ -6,6 +6,15 @@
  */
 
 import { StreamLanguage, LanguageSupport } from '@codemirror/language';
+import { keymap } from '@codemirror/view';
+import {
+  autocompletion,
+  completionKeymap,
+  type Completion,
+  type CompletionContext,
+  type CompletionResult,
+} from '@codemirror/autocomplete';
+import { catalog } from '@/core/catalog';
 
 const VAR_DOMAINS = 'ri|local|pv|ac|cons|rule|fv|tp|rf|rp|pp';
 
@@ -68,4 +77,34 @@ const sailLanguage = StreamLanguage.define<Record<string, never>>({
 
 export function sail(): LanguageSupport {
   return new LanguageSupport(sailLanguage);
+}
+
+// --- Autocomplete (Compose mode) ---------------------------------------------
+
+/** One completion per catalog function: the name completes, the parameter list
+ * shows inline, and the summary appears in the docs tooltip. Built once — the
+ * catalog is static. */
+const FUNCTION_COMPLETIONS: Completion[] = catalog.all().map((f) => ({
+  label: f.name,
+  type: 'function',
+  detail: f.params.length ? `(${f.params.map((p) => p.name).join(', ')})` : '()',
+  info: f.summary,
+}));
+
+// SAIL identifiers can carry a domain prefix (`a!`, `fn!`), so `!` is part of
+// the completed token.
+const TOKEN = /[\w!]*/;
+
+function completeSail(context: CompletionContext): CompletionResult | null {
+  const word = context.matchBefore(TOKEN);
+  if (!word || (word.from === word.to && !context.explicit)) return null;
+  return { from: word.from, options: FUNCTION_COMPLETIONS, validFor: /^[\w!]*$/ };
+}
+
+/** CodeMirror extension: catalog-function autocomplete for the Compose editor.
+ * autocompletion() already includes the completion keymap by default; we also
+ * register completionKeymap explicitly so ArrowUp/Down/Enter/Escape navigation
+ * is guaranteed regardless of the host editor's basicSetup keymap options. */
+export function sailAutocomplete() {
+  return [autocompletion({ override: [completeSail] }), keymap.of(completionKeymap)];
 }

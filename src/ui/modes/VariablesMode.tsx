@@ -38,8 +38,8 @@ export function VariablesMode() {
         <h2 className="text-base font-semibold">Variables</h2>
         <p className="text-sm text-muted-foreground">
           Declare <code>ri!</code> (rule inputs) and <code>local!</code> variables. They feed the
-          Guided-mode reference suggestions and resolve the validator&apos;s unresolved-reference
-          check.
+          Guided-mode field suggestions and resolve the validator&apos;s unresolved-reference check.
+          You can also create them inline from any variable field in Guided mode.
         </p>
       </div>
 
@@ -83,22 +83,27 @@ export function VariablesMode() {
       {variables.length === 0 ? (
         <p className="text-sm text-muted-foreground">No variables declared yet.</p>
       ) : (
-        <ul className="flex flex-col gap-1">
-          {variables.map((v, i) => (
-            <li
-              key={`${v.domain}!${v.name}-${i}`}
-              className="flex items-center justify-between border border-border px-3 py-1.5"
-            >
-              <span className="font-mono text-sm">
-                {v.domain}!{v.name}
-                {v.type && <span className="text-muted-foreground"> : {v.type}</span>}
-              </span>
-              <Button type="button" variant="ghost" onClick={() => removeVariable(i)}>
-                Remove
-              </Button>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Declared ({variables.length})
+          </span>
+          <ul className="flex flex-col gap-1">
+            {variables.map((v, i) => (
+              <li
+                key={`${v.domain}!${v.name}-${i}`}
+                className="flex items-center justify-between border border-border px-3 py-1.5"
+              >
+                <span className="font-mono text-sm">
+                  {v.domain}!{v.name}
+                  {v.type && <span className="text-muted-foreground"> : {v.type}</span>}
+                </span>
+                <Button type="button" variant="ghost" onClick={() => removeVariable(i)}>
+                  Remove
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

@@ -7,7 +7,7 @@
 [![CI](https://github.com/creativeskyai/SAIL-Formula-Generator/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/creativeskyai/SAIL-Formula-Generator/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Stack](https://img.shields.io/badge/React%2019%20·%20TypeScript%20·%20Vite%20·%20Tailwind%20v4-0e7490)](#stack)
-[![Tests](https://img.shields.io/badge/tests-160%20passing-3da638)](#testing--verification)
+[![Tests](https://img.shields.io/badge/tests-174%20passing-3da638)](#testing--verification)
 [![Runtime AI](https://img.shields.io/badge/AI%20at%20runtime-none-8b5cf6)](#why-it-works-without-ai)
 
 **[What it is](#what-it-is) · [Why no AI](#why-it-works-without-ai) · [The three modes](#the-three-modes) · [How it works](#how-it-works) · [Quickstart](#quickstart) · [Testing](#testing--verification) · [Scope](#scope--honesty)**
@@ -38,10 +38,10 @@ Because the target is structured and finite per function, a form-driven builder 
 | Mode | What you do | Backed by |
 |------|-------------|-----------|
 | **Guided** | Pick a scenario, fill a dynamic form, watch valid formatted SAIL generate live with deterministic validation, then copy or export. Nested and list slots render as add/remove sub-forms. | Recipes + serializer + validator |
-| **Compose** | A searchable catalog browser inserts skeleton snippets into a free-text editor, validated by bracket balance + function-name recognition. | Catalog + string-aware analyzer |
+| **Compose** | A searchable catalog browser inserts skeleton snippets into a free-text editor — with catalog-driven autocomplete and one-click copy — validated by bracket balance + function-name recognition. | Catalog + string-aware analyzer |
 | **Variables** | Declare `ri!` / `local!` variables with types; they feed the Guided reference suggestions and resolve the validator's unresolved-reference check. | Validator scope |
 
-Cross-cutting: a **record-type reference** you paste once (or fill with a sample dummy UUID) that prefills the record-type slot; live preview on every change; compact/expanded formatting toggle; copy disabled on error diagnostics; a record-reference re-linking caveat near Copy; preset save/load/delete (localStorage + JSON file, schema-validated on import); **session persistence** — the selected scenario, form values, variables, compose text, and formatting choice are stored in the browser and restored on reload; example placeholders and inline help on every form slot; tooltips on the mode tabs and action buttons; SAIL syntax highlighting; and dark mode.
+Cross-cutting: a **record-type reference** you paste once (or fill with a sample dummy UUID) that prefills the record-type slot; live preview on every change; compact/expanded formatting toggle; copy disabled on error diagnostics; a record-reference re-linking caveat near Copy; preset save/load/delete (localStorage + JSON file, schema-validated on import); **session persistence** — the selected scenario, form values, variables, compose text, and formatting choice are stored in the browser and restored on reload; example placeholders and inline help on every form slot; variable fields autocomplete over your declared variables and let you create new ones inline (no trip to the Variables tab); tooltips on the mode tabs and action buttons; SAIL syntax highlighting; and dark mode.
 
 ## How it works
 
@@ -106,7 +106,7 @@ The build is gated by CI (typecheck + catalog schema-check + tests + build) and 
 - **Recipe snapshot tests** — `(recipeId, slotValues)` → serialized SAIL; the committed snapshots are the spec.
 - **Validator unit tests** — one per diagnostic type.
 - **UI acceptance tests** — the full pick → fill → add-filter → valid-copyable-SAIL flow.
-- **Empirical gate** — [`VALIDATION.md`](VALIDATION.md) tracks a one-time paste-test of each seed recipe against a real Appian editor. Snapshots prove output is *stable*; this proves Appian *accepts* it.
+- **Empirical gate** — each seed recipe was paste-tested once against a real Appian editor and parses as valid SAIL. Snapshots prove output is *stable*; this proves Appian *accepts* it.
 
 ## Scope & honesty
 

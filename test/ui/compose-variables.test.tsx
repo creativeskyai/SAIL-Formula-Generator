@@ -28,6 +28,23 @@ describe('Compose mode', () => {
     expect(useStore.getState().composeText).toContain('a!pagingInfo(');
     expect(useStore.getState().composeText).toContain('startIndex:');
   });
+
+  it('Copy and Clear are disabled when empty, enabled with text, and Clear empties the pane', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Compose' }));
+
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText('Search functions…'), {
+      target: { value: 'pagingInfo' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'a!pagingInfo' }));
+
+    expect(screen.getByRole('button', { name: 'Copy' })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(useStore.getState().composeText).toBe('');
+  });
 });
 
 describe('Variables manager', () => {
