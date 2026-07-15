@@ -1,5 +1,6 @@
-/** Minimal Tailwind-styled form primitives (shadcn-like API, hand-rolled to
- * avoid a CLI dependency). Polished further in Phase 6. */
+/** Minimal form primitives on the ink-on-paper language: squared corners,
+ * hairline borders, flat surface fills, one global ink focus ring (index.css).
+ */
 
 import type {
   ButtonHTMLAttributes,
@@ -16,14 +17,16 @@ export function Button({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'solid' | 'outline' | 'ghost' }) {
   const styles = {
-    solid: 'bg-primary text-primary-foreground hover:opacity-90',
-    outline: 'border border-border hover:bg-muted',
+    solid: 'bg-primary text-primary-foreground hover:bg-primary-hover',
+    outline: 'border border-border-strong hover:bg-muted',
     ghost: 'hover:bg-muted',
   }[variant];
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:pointer-events-none disabled:opacity-50',
+        // No disabled:pointer-events-none — a disabled button must still show
+        // its explanatory tooltip (e.g. Preview's "Resolve errors" title).
+        'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-[background-color,opacity] duration-120 disabled:cursor-not-allowed disabled:opacity-50',
         styles,
         className,
       )}
@@ -36,7 +39,7 @@ export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInput
   return (
     <input
       className={cn(
-        'w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-info/40',
+        'w-full border border-border-strong bg-surface px-2.5 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70',
         className,
       )}
       {...props}
@@ -48,7 +51,7 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   return (
     <textarea
       className={cn(
-        'w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 font-mono text-sm outline-none focus:ring-2 focus:ring-info/40',
+        'w-full border border-border-strong bg-surface px-2.5 py-1.5 font-mono text-sm outline-none placeholder:text-muted-foreground/70',
         className,
       )}
       {...props}
@@ -60,9 +63,21 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
   return (
     <select
       className={cn(
-        'w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-info/40',
+        // Solid surface fill + color-scheme (index.css) keep the option popup
+        // legible in dark mode — never white-on-white again.
+        'w-full cursor-pointer border border-border-strong bg-surface px-2.5 py-1.5 text-sm outline-none',
         className,
       )}
+      {...props}
+    />
+  );
+}
+
+export function Checkbox({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      type="checkbox"
+      className={cn('h-4 w-4 cursor-pointer accent-[var(--primary)]', className)}
       {...props}
     />
   );
