@@ -5,12 +5,12 @@
  * edit calls `onChange` with the next values object.
  */
 
-import { useId } from 'react';
 import { X } from 'lucide-react';
 import type { SlotSpec, SlotType } from '@/core/recipe';
 import type { DeclaredVariable } from '@/core/types';
 import { getRecipe } from '@/templates';
 import { Button, Checkbox, Field, Select, TextInput } from './primitives';
+import { VariableCombobox } from './VariableCombobox';
 
 /** Seed a values object with each slot's default (and enum first-option), so
  * forms show sensible starting values rather than blanks. */
@@ -56,10 +56,18 @@ interface SlotInputProps {
   placeholder?: string;
   variables: DeclaredVariable[];
   required?: boolean;
+  onCreateVariable?: (v: DeclaredVariable) => void;
 }
 
-function SlotInput({ slot, value, onChange, placeholder, variables, required }: SlotInputProps) {
-  const listId = useId();
+function SlotInput({
+  slot,
+  value,
+  onChange,
+  placeholder,
+  variables,
+  required,
+  onCreateVariable,
+}: SlotInputProps) {
   switch (slot.type) {
     case 'text':
     case 'expression':
@@ -73,37 +81,21 @@ function SlotInput({ slot, value, onChange, placeholder, variables, required }: 
           onChange={(e) => onChange(e.target.value)}
         />
       );
-    case 'variableRef': {
-      const options = variables
-        .filter((v) => !slot.domains || slot.domains.includes(v.domain))
-        .map((v) => `${v.domain}!${v.name}`);
-      const hintId = `${listId}-hint`;
+    case 'variableRef':
       return (
-        <>
-          <TextInput
-            value={(value as string) ?? ''}
-            placeholder={placeholder}
-            className="font-mono"
-            list={options.length ? listId : undefined}
-            aria-describedby={options.length ? undefined : hintId}
-            onChange={(e) => onChange(e.target.value)}
-          />
-          {options.length > 0 ? (
-            <datalist id={listId}>
-              {options.map((o) => (
-                <option key={o} value={o} />
-              ))}
-            </datalist>
-          ) : (
-            // aria-hidden keeps this out of the wrapping <label>'s accessible-
-            // name subtree; aria-describedby still surfaces it as a description.
-            <span id={hintId} aria-hidden="true" className="text-[11px] text-muted-foreground/80">
-              Tip: declare variables in the Variables tab to get suggestions here.
-            </span>
-          )}
-        </>
+        <VariableCombobox
+          // Tolerate a non-string value from a stale/hand-edited preset: render
+          // it as empty rather than crashing, and let generate()'s zod check
+          // surface the type mismatch as a build issue (same tolerance the list
+          // case uses above).
+          value={typeof value === 'string' ? value : ''}
+          placeholder={placeholder}
+          variables={variables}
+          domains={slot.domains}
+          onCreateVariable={onCreateVariable}
+          onChange={(v) => onChange(v)}
+        />
       );
-    }
     case 'number':
       return (
         <TextInput
@@ -150,6 +142,7 @@ function SlotInput({ slot, value, onChange, placeholder, variables, required }: 
                   value={item}
                   placeholder={placeholder}
                   variables={variables}
+                  onCreateVariable={onCreateVariable}
                   onChange={(nv) => {
                     const next = items.slice();
                     next[i] = nv;
@@ -194,6 +187,7 @@ function SlotInput({ slot, value, onChange, placeholder, variables, required }: 
                 : {}
             }
             variables={variables}
+            onCreateVariable={onCreateVariable}
             onChange={(v) => onChange(v)}
           />
         </div>
@@ -207,9 +201,16 @@ export interface SlotFormProps {
   values: Record<string, unknown>;
   onChange: (values: Record<string, unknown>) => void;
   variables?: DeclaredVariable[];
+  onCreateVariable?: (v: DeclaredVariable) => void;
 }
 
-export function SlotForm({ slots, values, onChange, variables = [] }: SlotFormProps) {
+export function SlotForm({
+  slots,
+  values,
+  onChange,
+  variables = [],
+  onCreateVariable,
+}: SlotFormProps) {
   return (
     <div className="flex flex-col gap-3">
       {slots.map((s) => (
@@ -226,6 +227,7 @@ export function SlotForm({ slots, values, onChange, variables = [] }: SlotFormPr
             placeholder={s.placeholder}
             variables={variables}
             required={s.required}
+            onCreateVariable={onCreateVariable}
             onChange={(v) => onChange({ ...values, [s.id]: v })}
           />
         </Field>

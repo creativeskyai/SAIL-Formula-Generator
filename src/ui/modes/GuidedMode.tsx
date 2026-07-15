@@ -15,6 +15,7 @@ export function GuidedMode() {
   const valuesByRecipe = useStore((s) => s.valuesByRecipe);
   const setValues = useStore((s) => s.setValues);
   const variables = useStore((s) => s.variables);
+  const addVariable = useStore((s) => s.addVariable);
   const expanded = useStore((s) => s.expanded);
   const setExpanded = useStore((s) => s.setExpanded);
   const recordTypeRef = useStore((s) => s.recordTypeRef);
@@ -100,8 +101,12 @@ export function GuidedMode() {
                 aria-current={r.id === selectedRecipeId ? 'true' : undefined}
                 onClick={() => selectRecipe(r.id)}
                 className={cn(
-                  'justify-start px-2 py-1 text-left text-sm',
-                  r.id === selectedRecipeId ? 'bg-muted font-medium' : 'font-normal',
+                  // border-l always reserved (transparent) so the active rail
+                  // never shifts the row.
+                  'justify-start border-l-2 px-2 py-1 text-left text-sm',
+                  r.id === selectedRecipeId
+                    ? 'border-foreground bg-muted font-medium'
+                    : 'border-transparent font-normal',
                 )}
               >
                 {r.name}
@@ -122,6 +127,7 @@ export function GuidedMode() {
               slots={recipe.slots}
               values={values}
               variables={variables}
+              onCreateVariable={addVariable}
               onChange={(v) => setValues(recipe.id, v)}
             />
           </div>

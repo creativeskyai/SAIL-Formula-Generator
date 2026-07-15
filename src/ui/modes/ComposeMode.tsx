@@ -4,19 +4,22 @@ import { EditorView } from '@codemirror/view';
 import { catalog, type FunctionSpec } from '@/core/catalog';
 import { useStore } from '../store';
 import { analyzeCompose, buildSkeleton } from '../lib/compose';
-import { sail } from '../sail-language';
+import { sail, sailAutocomplete } from '../sail-language';
 import { Button, TextInput } from '../components/primitives';
 import { cn } from '@/lib/utils';
 
 // Stable identities so CodeMirror doesn't reconfigure on every keystroke.
-const EXTENSIONS = [sail(), EditorView.lineWrapping];
-const BASIC_SETUP = { lineNumbers: true, foldGutter: false } as const;
+const EXTENSIONS = [sail(), sailAutocomplete(), EditorView.lineWrapping];
+// Autocompletion comes from the SAIL source above, so disable basicSetup's
+// built-in (source-less) one — otherwise two completion configs coexist.
+const BASIC_SETUP = { lineNumbers: true, foldGutter: false, autocompletion: false } as const;
 
 export function ComposeMode() {
   const composeText = useStore((s) => s.composeText);
   const setComposeText = useStore((s) => s.setComposeText);
   const theme = useStore((s) => s.theme);
   const [query, setQuery] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -36,6 +39,17 @@ export function ComposeMode() {
   const insert = (spec: FunctionSpec) => {
     const snippet = buildSkeleton(spec);
     setComposeText(composeText ? `${composeText}\n\n${snippet}` : snippet);
+  };
+
+  const copy = async () => {
+    if (!composeText || !navigator.clipboard) return;
+    try {
+      await navigator.clipboard.writeText(composeText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard write denied (permissions / non-secure context) — no-op */
+    }
   };
 
   return (
@@ -73,10 +87,35 @@ export function ComposeMode() {
       </div>
 
       <div className="flex flex-col gap-2 lg:min-h-0">
-        <p className="text-xs text-muted-foreground">
-          Click a function to insert a skeleton, then edit freely. Validation checks bracket
-          balance and function names only — the full tree editor is post-MVP.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-xs text-muted-foreground">
+            Click a function to insert its skeleton, or start typing for autocomplete — then edit
+            freely. Validation here checks bracket balance and known function names; use Guided mode
+            for fully-validated output.
+          </p>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setComposeText('')}
+              disabled={!composeText}
+              title="Clear the editor"
+            >
+              Clear
+            </Button>
+            <Button
+              type="button"
+              onClick={copy}
+              disabled={!composeText}
+              title="Copy the expression to the clipboard"
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+        </div>
+        <span className="sr-only" role="status" aria-live="polite">
+          {copied ? 'Copied to clipboard' : ''}
+        </span>
         <div className="min-h-[300px] overflow-auto border border-border text-sm lg:min-h-0 lg:flex-1">
           <CodeMirror
             value={composeText}
