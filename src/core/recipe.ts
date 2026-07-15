@@ -12,7 +12,8 @@ import type { SailNode, VarDomain } from './ast';
 import type { DeclaredVariable } from './types';
 
 export type SlotType =
-  | { type: 'text' | 'number' | 'boolean' }
+  | { type: 'text' | 'boolean' }
+  | { type: 'number'; integer?: boolean; min?: number }
   | { type: 'enum'; options: string[] }
   | { type: 'expression' }
   | { type: 'recordTypeRef' }
@@ -47,14 +48,35 @@ export interface Recipe {
 
 // --- zod derivation ----------------------------------------------------------
 
+// Reference-shape validators. A variable reference is `domain!name` with
+// optional dotted/indexed accessors; a record/field reference starts with
+// `recordType!` and contains no whitespace. Both reject the malformed refs the
+// audit found (e.g. `ri!my case`, `ri!1id`, a bare `Case`).
+const IDENT = String.raw`[A-Za-z_]\w*`;
+const ACCESSOR = String.raw`(?:\.${IDENT}|\[[^\]]*\])`;
+const VAR_REF_RE = new RegExp(
+  `^(?:ri|local|pv|ac|cons|rule|fv|tp|rf|rp|pp)!${IDENT}${ACCESSOR}*$`,
+);
+const RECORD_REF_RE = /^recordType!\S+$/;
+
+function isValidRef(type: 'variableRef' | 'recordTypeRef' | 'fieldRef', value: string): boolean {
+  const t = value.trim();
+  if (t === '') return true; // empty is handled by required/optional rules
+  return (type === 'variableRef' ? VAR_REF_RE : RECORD_REF_RE).test(t);
+}
+
 function slotToZod(slot: SlotType): z.ZodTypeAny {
   switch (slot.type) {
     case 'text':
       return z.string();
-    case 'number':
-      // Reject NaN and ±Infinity — String(Infinity) is "Infinity", not a
-      // legal SAIL number literal.
-      return z.number().finite();
+    case 'number': {
+      // Reject NaN and ±Infinity — String(Infinity) is "Infinity", not a legal
+      // SAIL number literal. Apply integer / minimum constraints when declared.
+      let n = z.number().finite();
+      if (slot.integer) n = n.int();
+      if (slot.min !== undefined) n = n.min(slot.min);
+      return n;
+    }
     case 'boolean':
       return z.boolean();
     case 'enum':
@@ -80,10 +102,18 @@ export function slotsToZodSchema(slots: SlotSpec[]): z.ZodObject<z.ZodRawShape> 
     // A required text/expression/ref slot must have non-whitespace content — an
     // empty or all-spaces value would otherwise serialize to nothing (or a
     // blank argument) and produce invalid SAIL.
-    if (s.required && schema instanceof z.ZodString) {
-      schema = schema.refine((v) => v.trim().length > 0, {
-        message: `${s.label} is required`,
-      });
+    if (schema instanceof z.ZodString) {
+      if (s.required) {
+        schema = schema.refine((v) => v.trim().length > 0, {
+          message: `${s.label} is required`,
+        });
+      }
+      const t = s.slot.type;
+      if (t === 'variableRef' || t === 'recordTypeRef' || t === 'fieldRef') {
+        schema = schema.refine((v) => isValidRef(t, v), {
+          message: `${s.label} must be a valid ${t === 'variableRef' ? 'variable' : 'record'} reference`,
+        });
+      }
     }
     if (s.default !== undefined) schema = schema.default(s.default as never);
     else if (!s.required) schema = schema.optional();

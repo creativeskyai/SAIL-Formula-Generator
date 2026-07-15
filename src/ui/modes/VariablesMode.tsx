@@ -14,12 +14,22 @@ export function VariablesMode() {
   const [domain, setDomain] = useState<VarDomain>('ri');
   const [name, setName] = useState('');
   const [type, setType] = useState<SailType>('Text');
+  const [error, setError] = useState<string | null>(null);
 
   const add = () => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    addVariable({ domain, name: trimmed, type });
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+    if (!/^[A-Za-z_]\w*$/.test(trimmedName)) {
+      setError('Name must be a valid identifier — letters, digits, and underscores, not starting with a digit.');
+      return;
+    }
+    if (variables.some((v) => v.domain === domain && v.name === trimmedName)) {
+      setError(`${domain}!${trimmedName} is already declared.`);
+      return;
+    }
+    addVariable({ domain, name: trimmedName, type });
     setName('');
+    setError(null);
   };
 
   return (
@@ -64,6 +74,7 @@ export function VariablesMode() {
           Add
         </Button>
       </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
 
       {variables.length === 0 ? (
         <p className="text-sm text-muted-foreground">No variables declared yet.</p>
@@ -71,7 +82,7 @@ export function VariablesMode() {
         <ul className="flex flex-col gap-1">
           {variables.map((v, i) => (
             <li
-              key={`${v.domain}!${v.name}`}
+              key={`${v.domain}!${v.name}-${i}`}
               className="flex items-center justify-between rounded-md border border-border px-3 py-1.5"
             >
               <span className="font-mono text-sm">

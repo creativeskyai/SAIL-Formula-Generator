@@ -1,5 +1,6 @@
 import { arr, bool, call, kw, num, raw, recordRef, text } from '@/core/builder';
 import type { Recipe } from '@/core/recipe';
+import { trimmed } from './_util';
 
 // The complete operator set documented for a!queryFilter (Appian 24.4).
 const FILTER_OPERATORS = [
@@ -50,12 +51,19 @@ export const queryFilter: Recipe = {
       help: 'A SAIL expression. Leave empty for is null / not null.',
     },
   ],
-  build: (v) =>
-    call('a!queryFilter', [
-      kw('field', recordRef(v.field as string)),
-      kw('operator', text(v.operator as string)),
-      kw('value', v.value ? raw(v.value as string) : null),
-    ]),
+  build: (v) => {
+    const operator = v.operator as string;
+    const value = trimmed(v.value);
+    // Every operator except is null / not null needs a value.
+    if (operator !== 'is null' && operator !== 'not null' && value === '') {
+      throw new Error(`The "${operator}" operator requires a value.`);
+    }
+    return call('a!queryFilter', [
+      kw('field', recordRef(trimmed(v.field))),
+      kw('operator', text(operator)),
+      kw('value', value ? raw(value) : null),
+    ]);
+  },
 };
 
 export const queryRecordType: Recipe = {
@@ -76,7 +84,12 @@ export const queryRecordType: Recipe = {
       label: 'Filters',
       slot: { type: 'list', item: { type: 'nestedRecipe', recipeId: 'query-filter' } },
     },
-    { id: 'batchSize', label: 'Batch Size', slot: { type: 'number' }, default: 100 },
+    {
+      id: 'batchSize',
+      label: 'Batch Size',
+      slot: { type: 'number', integer: true, min: 1 },
+      default: 100,
+    },
     { id: 'sortField', label: 'Sort Field', slot: { type: 'fieldRef' } },
     {
       id: 'sortAscending',
@@ -87,9 +100,9 @@ export const queryRecordType: Recipe = {
   ],
   build: (v, ctx) => {
     const filters = (v.filters as Record<string, unknown>[] | undefined) ?? [];
-    const sortField = v.sortField as string | undefined;
+    const sortField = trimmed(v.sortField);
     return call('a!queryRecordType', [
-      kw('recordType', recordRef(v.recordType as string)),
+      kw('recordType', recordRef(trimmed(v.recordType))),
       kw(
         'filters',
         filters.length

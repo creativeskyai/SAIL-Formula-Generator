@@ -30,9 +30,13 @@ export function Preview({
 
   const copy = async () => {
     if (!code || !navigator.clipboard) return;
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard write denied (permissions / non-secure context) — no-op */
+    }
   };
 
   const hasRecordRef = code.includes('recordType!');

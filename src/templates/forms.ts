@@ -1,6 +1,13 @@
 import { arr, bool, call, kw, raw, text } from '@/core/builder';
 import type { Recipe } from '@/core/recipe';
-import { parseRef } from './_util';
+import { parseRef, trimmed } from './_util';
+
+/** A variableRef slot -> a ref node, or null when empty/whitespace-only so the
+ * optional arg prunes instead of emitting a blank value. */
+const optRef = (v: unknown) => {
+  const t = trimmed(v);
+  return t ? parseRef(t) : null;
+};
 
 export const textField: Recipe = {
   id: 'text-field',
@@ -28,8 +35,8 @@ export const textField: Recipe = {
   build: (v) =>
     call('a!textField', [
       kw('label', text(v.label as string)),
-      kw('value', v.value ? parseRef(v.value as string) : null),
-      kw('saveInto', v.saveInto ? parseRef(v.saveInto as string) : null),
+      kw('value', optRef(v.value)),
+      kw('saveInto', optRef(v.saveInto)),
       kw('placeholder', v.placeholder ? text(v.placeholder as string) : null),
       kw('required', v.required ? bool(true) : null),
       kw('readOnly', v.readOnly ? bool(true) : null),
@@ -55,8 +62,8 @@ export const integerField: Recipe = {
   build: (v) =>
     call('a!integerField', [
       kw('label', text(v.label as string)),
-      kw('value', v.value ? parseRef(v.value as string) : null),
-      kw('saveInto', v.saveInto ? parseRef(v.saveInto as string) : null),
+      kw('value', optRef(v.value)),
+      kw('saveInto', optRef(v.saveInto)),
       kw('required', v.required ? bool(true) : null),
     ]),
 };
@@ -99,8 +106,8 @@ export const dropdownField: Recipe = {
       kw('label', text(v.label as string)),
       kw('choiceLabels', pairs.length ? arr(pairs.map((p) => text(p.label))) : null),
       kw('choiceValues', pairs.length ? arr(pairs.map((p) => raw(p.value))) : null),
-      kw('value', v.value ? parseRef(v.value as string) : null),
-      kw('saveInto', v.saveInto ? parseRef(v.saveInto as string) : null),
+      kw('value', optRef(v.value)),
+      kw('saveInto', optRef(v.saveInto)),
       kw('required', v.required ? bool(true) : null),
     ]);
   },

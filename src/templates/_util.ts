@@ -26,6 +26,12 @@ const DOMAINS: VarDomain[] = [
  * into the variable name, which would make the validator flag a valid binding
  * as unresolved.
  */
+/** Trim a slot value to a string; '' for anything empty/whitespace-only so
+ * optional slots prune cleanly instead of emitting a blank argument. */
+export function trimmed(v: unknown): string {
+  return typeof v === 'string' ? v.trim() : '';
+}
+
 export function parseRef(s: string): VariableRef | RawExpr {
   const t = s.trim();
   const m = /^([a-z]+)!([A-Za-z0-9_]+)$/.exec(t);

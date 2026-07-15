@@ -206,7 +206,13 @@ export function SlotForm({ slots, values, onChange, variables = [] }: SlotFormPr
   return (
     <div className="flex flex-col gap-3">
       {slots.map((s) => (
-        <Field key={s.id} label={s.label} help={s.help} required={s.required}>
+        <Field
+          key={s.id}
+          label={s.label}
+          help={s.help}
+          required={s.required}
+          asGroup={s.slot.type === 'list' || s.slot.type === 'nestedRecipe'}
+        >
           <SlotInput
             slot={s.slot}
             value={values[s.id]}

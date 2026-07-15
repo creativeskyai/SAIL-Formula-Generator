@@ -72,21 +72,27 @@ export function Field({
   label,
   help,
   required,
+  asGroup,
   children,
 }: {
   label: string;
   help?: string;
   required?: boolean;
+  /** Render as a <div> group instead of a <label> — for slots whose control is
+   * itself a set of labelled fields (list / nested recipe), avoiding invalid
+   * nested <label> elements. */
+  asGroup?: boolean;
   children: ReactNode;
 }) {
+  const Wrapper = asGroup ? 'div' : 'label';
   return (
-    <label className="flex flex-col gap-1">
+    <Wrapper className="flex flex-col gap-1">
       <span className="text-xs font-medium text-muted-foreground">
         {label}
         {required && <span className="text-destructive"> *</span>}
       </span>
       {children}
       {help && <span className="text-[11px] text-muted-foreground/80">{help}</span>}
-    </label>
+    </Wrapper>
   );
 }

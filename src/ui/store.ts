@@ -99,7 +99,14 @@ export const useStore = create<AppState>((set) => ({
       mode: 'guided',
       selectedRecipeId: preset.recipeId,
       valuesByRecipe: { ...s.valuesByRecipe, [preset.recipeId]: preset.slotValues },
-      variables: preset.variables,
+      // Merge (union) rather than replace, so loading a preset never silently
+      // discards variables the user already declared this session.
+      variables: [
+        ...s.variables,
+        ...preset.variables.filter(
+          (pv) => !s.variables.some((ev) => ev.domain === pv.domain && ev.name === pv.name),
+        ),
+      ],
     })),
 }));
 

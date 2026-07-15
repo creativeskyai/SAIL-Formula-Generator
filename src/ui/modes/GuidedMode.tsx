@@ -25,7 +25,13 @@ export function GuidedMode() {
   const values = useMemo(
     () =>
       recipe
-        ? (valuesByRecipe[recipe.id] ?? initialValues(recipe.slots, recordTypeRef))
+        ? {
+            // Defaults (incl. the record-type reference prefill) as the base,
+            // stored edits overlaid — so setting the reference after editing a
+            // field still fills an untouched record-type slot.
+            ...initialValues(recipe.slots, recordTypeRef),
+            ...(valuesByRecipe[recipe.id] ?? {}),
+          }
         : ({} as Record<string, unknown>),
     [recipe, valuesByRecipe, recordTypeRef],
   );
@@ -44,7 +50,7 @@ export function GuidedMode() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !hasError && sail && navigator.clipboard) {
-        navigator.clipboard.writeText(sail);
+        navigator.clipboard.writeText(sail).catch(() => {});
       }
     };
     window.addEventListener('keydown', onKey);
