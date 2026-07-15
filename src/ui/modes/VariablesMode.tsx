@@ -45,7 +45,11 @@ export function VariablesMode() {
 
       <div className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[110px_1fr_150px_auto]">
         <Field label="Domain">
-          <Select value={domain} onChange={(e) => setDomain(e.target.value as VarDomain)}>
+          <Select
+            value={domain}
+            title="ri! = rule input passed into the interface; local! = variable local to the expression"
+            onChange={(e) => setDomain(e.target.value as VarDomain)}
+          >
             {DECLARABLE_DOMAINS.map((d) => (
               <option key={d} value={d}>
                 {d}!

@@ -86,12 +86,16 @@ function SlotInput({ slot, value, onChange, placeholder, variables, required }: 
             list={options.length ? listId : undefined}
             onChange={(e) => onChange(e.target.value)}
           />
-          {options.length > 0 && (
+          {options.length > 0 ? (
             <datalist id={listId}>
               {options.map((o) => (
                 <option key={o} value={o} />
               ))}
             </datalist>
+          ) : (
+            <span className="text-[11px] text-muted-foreground/80">
+              Tip: declare variables in the Variables tab to get suggestions here.
+            </span>
           )}
         </>
       );

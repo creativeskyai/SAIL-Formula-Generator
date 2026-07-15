@@ -126,9 +126,18 @@ export function GuidedMode() {
             />
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Pick a scenario on the left to start building.
-          </p>
+          <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Build SAIL in three steps:</p>
+            <ol className="list-decimal space-y-1 pl-5">
+              <li>Pick a scenario from the list on the left.</li>
+              <li>Fill in the form — the SAIL output updates live as you type.</li>
+              <li>Copy the result (Ctrl+Enter), or save it as a preset for later.</li>
+            </ol>
+            <p className="text-xs">
+              Your work is saved in this browser automatically — reloading the page picks up where
+              you left off.
+            </p>
+          </div>
         )}
       </section>
 

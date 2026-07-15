@@ -8,10 +8,10 @@ import { ComposeMode } from './modes/ComposeMode';
 import { VariablesMode } from './modes/VariablesMode';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-const TABS: { id: Mode; label: string }[] = [
-  { id: 'guided', label: 'Guided' },
-  { id: 'compose', label: 'Compose' },
-  { id: 'variables', label: 'Variables' },
+const TABS: { id: Mode; label: string; title: string }[] = [
+  { id: 'guided', label: 'Guided', title: 'Pick a scenario and fill a form — SAIL generates live' },
+  { id: 'compose', label: 'Compose', title: 'Free-form editor with a searchable function catalog' },
+  { id: 'variables', label: 'Variables', title: 'Declare ri! and local! variables for suggestions and validation' },
 ];
 
 export default function App() {
@@ -69,6 +69,7 @@ export default function App() {
                 aria-selected={mode === t.id}
                 aria-controls={`panel-${t.id}`}
                 tabIndex={mode === t.id ? 0 : -1}
+                title={t.title}
                 onClick={() => setMode(t.id)}
                 onKeyDown={onTabKeyDown}
                 className="px-3 py-1 text-sm"

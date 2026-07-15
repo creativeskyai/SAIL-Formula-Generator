@@ -90,7 +90,13 @@ export const queryRecordType: Recipe = {
       slot: { type: 'number', integer: true, min: 1 },
       default: 100,
     },
-    { id: 'sortField', label: 'Sort Field', slot: { type: 'fieldRef' } },
+    {
+      id: 'sortField',
+      label: 'Sort Field',
+      slot: { type: 'fieldRef' },
+      placeholder: 'recordType!Case.fields.createdOn',
+      help: 'Optional — leave empty for no sort.',
+    },
     {
       id: 'sortAscending',
       label: 'Sort Ascending',

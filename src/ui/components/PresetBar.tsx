@@ -1,6 +1,8 @@
 import { useRef, useState, type ChangeEvent } from 'react';
+import { Trash2 } from 'lucide-react';
 import {
   buildPreset,
+  deletePreset,
   exportPresetFile,
   importPresetFile,
   listPresetNames,
@@ -23,6 +25,7 @@ export function PresetBar({
   const loadPresetState = useStore((s) => s.loadPresetState);
   const [name, setName] = useState('');
   const [names, setNames] = useState<string[]>(() => listPresetNames());
+  const [selected, setSelected] = useState('');
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +52,7 @@ export function PresetBar({
   };
 
   const load = (presetName: string) => {
+    setSelected(presetName);
     if (!presetName) return;
     try {
       const preset = loadPreset(presetName);
@@ -56,6 +60,17 @@ export function PresetBar({
     } catch {
       setError(`Preset "${presetName}" is invalid or from an older version.`);
     }
+  };
+
+  const remove = () => {
+    if (!selected) return;
+    if (!deletePreset(selected)) {
+      setError('Could not delete preset — browser storage is unavailable.');
+      return;
+    }
+    setSelected('');
+    setError(null);
+    setNames(listPresetNames());
   };
 
   const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -79,32 +94,57 @@ export function PresetBar({
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && save()}
         />
-        <Button variant="outline" type="button" onClick={save} disabled={!name.trim()}>
+        <Button
+          variant="outline"
+          type="button"
+          onClick={save}
+          disabled={!name.trim()}
+          title="Save the current form values and variables under this name (browser storage)"
+        >
           Save
         </Button>
         {names.length > 0 && (
-          <Select
-            className="w-auto"
-            value=""
-            onChange={(e) => load(e.target.value)}
-            aria-label="Load preset"
-          >
-            <option value="">Load preset…</option>
-            {names.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </Select>
+          <>
+            <Select
+              className="w-auto"
+              value={selected}
+              onChange={(e) => load(e.target.value)}
+              aria-label="Load preset"
+            >
+              <option value="">Load preset…</option>
+              {names.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </Select>
+            {selected && (
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={remove}
+                aria-label={`Delete preset ${selected}`}
+                title={`Delete preset "${selected}"`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </>
         )}
         <Button
           variant="outline"
           type="button"
           onClick={() => exportPresetFile(buildPreset(recipeId, values, variables), `${recipeId}.json`)}
+          title="Download the current form values and variables as a JSON file"
         >
           Export
         </Button>
-        <Button variant="outline" type="button" onClick={() => fileRef.current?.click()}>
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          title="Load form values and variables from an exported JSON file"
+        >
           Import
         </Button>
         <input
