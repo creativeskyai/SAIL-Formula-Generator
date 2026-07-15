@@ -7,7 +7,7 @@
 [![CI](https://github.com/creativeskyai/SAIL-Formula-Generator/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/creativeskyai/SAIL-Formula-Generator/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Stack](https://img.shields.io/badge/React%2019%20·%20TypeScript%20·%20Vite%20·%20Tailwind%20v4-0e7490)](#stack)
-[![Tests](https://img.shields.io/badge/tests-135%20passing-3da638)](#testing--verification)
+[![Tests](https://img.shields.io/badge/tests-157%20passing-3da638)](#testing--verification)
 [![Runtime AI](https://img.shields.io/badge/AI%20at%20runtime-none-8b5cf6)](#why-it-works-without-ai)
 
 **[What it is](#what-it-is) · [Why no AI](#why-it-works-without-ai) · [The three modes](#the-three-modes) · [How it works](#how-it-works) · [Quickstart](#quickstart) · [Testing](#testing--verification) · [Scope](#scope--honesty)**
