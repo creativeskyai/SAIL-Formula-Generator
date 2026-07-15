@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Button } from './primitives';
 
 interface Props {
   children: ReactNode;
@@ -29,13 +30,9 @@ export class ErrorBoundary extends Component<Props, State> {
             The current input caused a rendering error. This usually means a loaded or imported
             preset doesn&apos;t match its recipe. Try a different scenario or clear the input.
           </p>
-          <button
-            type="button"
-            onClick={() => this.setState({ error: null })}
-            className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
-          >
+          <Button type="button" variant="outline" onClick={() => this.setState({ error: null })}>
             Dismiss
-          </button>
+          </Button>
         </div>
       );
     }

@@ -58,8 +58,8 @@ export function GuidedMode() {
   }, [sail, hasError]);
 
   return (
-    <div className="flex h-full flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+    <div className="flex min-h-full flex-col gap-3 lg:h-full">
+      <div className="flex flex-wrap items-center gap-2 border border-border bg-muted px-3 py-2">
         <span className="text-xs font-medium text-muted-foreground">Record type reference</span>
         <TextInput
           className="min-w-[240px] flex-1 font-mono"
@@ -85,31 +85,33 @@ export function GuidedMode() {
           test generation without a real environment.
         </p>
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)] gap-4">
-        <nav className="flex flex-col gap-3 overflow-y-auto border-r border-border pr-3">
+      <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)]">
+        <nav className="flex flex-col gap-3 lg:overflow-y-auto lg:border-r lg:border-border lg:pr-3">
         {Object.entries(groups).map(([category, list]) => (
           <div key={category} className="flex flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               {category}
             </span>
             {list.map((r) => (
-              <button
+              <Button
                 key={r.id}
                 type="button"
+                variant="ghost"
+                aria-current={r.id === selectedRecipeId ? 'true' : undefined}
                 onClick={() => selectRecipe(r.id)}
                 className={cn(
-                  'rounded px-2 py-1 text-left text-sm transition hover:bg-muted',
-                  r.id === selectedRecipeId && 'bg-muted font-medium',
+                  'justify-start px-2 py-1 text-left text-sm',
+                  r.id === selectedRecipeId ? 'bg-muted font-medium' : 'font-normal',
                 )}
               >
                 {r.name}
-              </button>
+              </Button>
             ))}
           </div>
         ))}
       </nav>
 
-      <section className="overflow-y-auto">
+      <section className="lg:overflow-y-auto">
         {recipe ? (
           <div className="flex flex-col gap-3">
             <div>
@@ -130,7 +132,7 @@ export function GuidedMode() {
         )}
       </section>
 
-      <section className="flex flex-col gap-3 overflow-y-auto">
+      <section className="flex flex-col gap-3 lg:overflow-y-auto">
         {recipe && preview ? (
           <>
             <PresetBar recipeId={recipe.id} values={values} />

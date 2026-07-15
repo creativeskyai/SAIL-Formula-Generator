@@ -26,7 +26,10 @@ export function Button({
       className={cn(
         // No disabled:pointer-events-none — a disabled button must still show
         // its explanatory tooltip (e.g. Preview's "Resolve errors" title).
-        'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-[background-color,opacity] duration-120 disabled:cursor-not-allowed disabled:opacity-50',
+        // Transition transform only, never a token-valued color property —
+        // otherwise a light/dark toggle mid-hover animates through a stale
+        // color instead of switching instantly.
+        'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-transform duration-[120ms] ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100',
         styles,
         className,
       )}

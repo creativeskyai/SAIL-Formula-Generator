@@ -6,10 +6,11 @@
  */
 
 import { useId } from 'react';
+import { X } from 'lucide-react';
 import type { SlotSpec, SlotType } from '@/core/recipe';
 import type { DeclaredVariable } from '@/core/types';
 import { getRecipe } from '@/templates';
-import { Button, Field, Select, TextInput } from './primitives';
+import { Button, Checkbox, Field, Select, TextInput } from './primitives';
 
 /** Seed a values object with each slot's default (and enum first-option), so
  * forms show sensible starting values rather than blanks. */
@@ -106,11 +107,9 @@ function SlotInput({ slot, value, onChange, placeholder, variables, required }: 
       );
     case 'boolean':
       return (
-        <input
-          type="checkbox"
+        <Checkbox
           checked={Boolean(value)}
           onChange={(e) => onChange(e.target.checked)}
-          className="h-4 w-4 accent-[var(--primary)]"
         />
       );
     case 'enum':
@@ -156,7 +155,7 @@ function SlotInput({ slot, value, onChange, placeholder, variables, required }: 
                 aria-label="Remove item"
                 onClick={() => onChange(items.filter((_, idx) => idx !== i))}
               >
-                ✕
+                <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
@@ -178,7 +177,7 @@ function SlotInput({ slot, value, onChange, placeholder, variables, required }: 
         return <div className="text-xs text-muted-foreground">No recipe bound to this slot.</div>;
       }
       return (
-        <div className="rounded-md border border-border/60 bg-muted/30 p-2">
+        <div className="border border-border bg-muted p-2">
           <SlotForm
             slots={recipe.slots}
             values={
