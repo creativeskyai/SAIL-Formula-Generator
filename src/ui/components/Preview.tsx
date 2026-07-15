@@ -46,14 +46,23 @@ export function Preview({
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">SAIL Output</span>
         <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={onToggleExpanded}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onToggleExpanded}
+            title={
+              expanded
+                ? 'Switch to compact single-line formatting'
+                : 'Switch to expanded multi-line formatting'
+            }
+          >
             {expanded ? 'Compact' : 'Expanded'}
           </Button>
           <Button
             type="button"
             onClick={copy}
             disabled={!canCopy || !code}
-            title={canCopy ? undefined : 'Resolve errors before copying'}
+            title={canCopy ? 'Copy SAIL to clipboard (Ctrl+Enter)' : 'Resolve errors before copying'}
           >
             {copied ? 'Copied' : 'Copy'}
           </Button>

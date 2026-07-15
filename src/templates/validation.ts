@@ -7,11 +7,18 @@ export const requiredValidation: Recipe = {
   category: 'validation',
   description: 'A validation message shown when its conditions are met.',
   slots: [
-    { id: 'message', label: 'Message', required: true, slot: { type: 'text' } },
+    {
+      id: 'message',
+      label: 'Message',
+      required: true,
+      slot: { type: 'text' },
+      placeholder: 'A value is required.',
+    },
     {
       id: 'validateAfter',
       label: 'Validate After',
       slot: { type: 'enum', options: ['KEYSTROKE', 'UNFOCUS', 'SUBMIT', 'REFRESH'] },
+      help: 'When Appian evaluates the validation. Leave (none) for the default.',
     },
   ],
   build: (v) =>

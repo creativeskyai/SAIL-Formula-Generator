@@ -77,6 +77,7 @@ function SlotInput({ slot, value, onChange, placeholder, variables, required }: 
       const options = variables
         .filter((v) => !slot.domains || slot.domains.includes(v.domain))
         .map((v) => `${v.domain}!${v.name}`);
+      const hintId = `${listId}-hint`;
       return (
         <>
           <TextInput
@@ -84,14 +85,21 @@ function SlotInput({ slot, value, onChange, placeholder, variables, required }: 
             placeholder={placeholder}
             className="font-mono"
             list={options.length ? listId : undefined}
+            aria-describedby={options.length ? undefined : hintId}
             onChange={(e) => onChange(e.target.value)}
           />
-          {options.length > 0 && (
+          {options.length > 0 ? (
             <datalist id={listId}>
               {options.map((o) => (
                 <option key={o} value={o} />
               ))}
             </datalist>
+          ) : (
+            // aria-hidden keeps this out of the wrapping <label>'s accessible-
+            // name subtree; aria-describedby still surfaces it as a description.
+            <span id={hintId} aria-hidden="true" className="text-[11px] text-muted-foreground/80">
+              Tip: declare variables in the Variables tab to get suggestions here.
+            </span>
           )}
         </>
       );

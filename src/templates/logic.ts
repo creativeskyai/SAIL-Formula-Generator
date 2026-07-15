@@ -19,12 +19,14 @@ export const ifElse: Recipe = {
       label: 'Value if true',
       required: true,
       slot: { type: 'expression' },
+      placeholder: '"High"',
     },
     {
       id: 'valueIfFalse',
       label: 'Value if false',
       required: true,
       slot: { type: 'expression' },
+      placeholder: '"Low"',
     },
   ],
   build: (v) =>
@@ -45,12 +47,14 @@ export const localVariables: Recipe = {
       id: 'names',
       label: 'Variable names',
       slot: { type: 'list', item: { type: 'text' } },
+      placeholder: 'total',
       help: 'Names without the local! prefix, e.g. total.',
     },
     {
       id: 'values',
       label: 'Variable values (expressions)',
       slot: { type: 'list', item: { type: 'expression' } },
+      placeholder: 'sum(ri!amounts)',
       help: 'Positionally paired with the names above.',
     },
     {
@@ -58,6 +62,8 @@ export const localVariables: Recipe = {
       label: 'Body expression',
       required: true,
       slot: { type: 'expression' },
+      placeholder: 'local!total * 2',
+      help: 'The expression the block returns — reference the locals declared above.',
     },
   ],
   build: (v) => {
