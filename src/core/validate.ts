@@ -26,8 +26,16 @@ export function isRawTextBalanced(text: string): boolean {
     if (c === '/' && text[i + 1] === '*') {
       // Skip a /* ... */ block comment; brackets inside it are not code.
       i += 2;
-      while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) i++;
-      i += 2; // step past the closing */ (or past end if unterminated)
+      let closed = false;
+      while (i < text.length) {
+        if (text[i] === '*' && text[i + 1] === '/') {
+          i += 2;
+          closed = true;
+          break;
+        }
+        i++;
+      }
+      if (!closed) return false; // unterminated comment — not valid SAIL
       continue;
     }
     if (c === '"') {

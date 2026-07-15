@@ -33,16 +33,29 @@ export function listPresetNames(): string[] {
   return Object.keys(readStore()).sort();
 }
 
-export function savePreset(name: string, preset: Preset): void {
+/** Returns false if the write fails (storage unavailable, quota exceeded,
+ * Safari private mode) so the caller can surface an error instead of throwing
+ * out of an event handler. */
+export function savePreset(name: string, preset: Preset): boolean {
   const all = readStore();
   all[name] = preset;
-  localStorage.setItem(LS_KEY, JSON.stringify(all));
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(all));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function deletePreset(name: string): void {
+export function deletePreset(name: string): boolean {
   const all = readStore();
   delete all[name];
-  localStorage.setItem(LS_KEY, JSON.stringify(all));
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(all));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Load and validate a named preset. Returns null if absent; throws (ZodError)

@@ -13,11 +13,18 @@ import { Button, Field, Select, TextInput } from './primitives';
 
 /** Seed a values object with each slot's default (and enum first-option), so
  * forms show sensible starting values rather than blanks. */
-export function initialValues(slots: SlotSpec[]): Record<string, unknown> {
+export function initialValues(
+  slots: SlotSpec[],
+  recordTypeRef?: string,
+): Record<string, unknown> {
   const values: Record<string, unknown> = {};
   for (const s of slots) {
     if (s.default !== undefined) values[s.id] = s.default;
-    else if (s.slot.type === 'enum') values[s.id] = s.slot.options[0];
+    // Prefill record-type references from the global setting the user pasted.
+    else if (s.slot.type === 'recordTypeRef' && recordTypeRef) values[s.id] = recordTypeRef;
+    // Seed a first-option only for REQUIRED enums; an optional enum must be
+    // omittable, so it starts unset (and offers a "(none)" choice).
+    else if (s.slot.type === 'enum' && s.required) values[s.id] = s.slot.options[0];
   }
   return values;
 }
@@ -47,9 +54,10 @@ interface SlotInputProps {
   onChange: (v: unknown) => void;
   placeholder?: string;
   variables: DeclaredVariable[];
+  required?: boolean;
 }
 
-function SlotInput({ slot, value, onChange, placeholder, variables }: SlotInputProps) {
+function SlotInput({ slot, value, onChange, placeholder, variables, required }: SlotInputProps) {
   const listId = useId();
   switch (slot.type) {
     case 'text':
@@ -107,7 +115,12 @@ function SlotInput({ slot, value, onChange, placeholder, variables }: SlotInputP
       );
     case 'enum':
       return (
-        <Select value={(value as string) ?? ''} onChange={(e) => onChange(e.target.value)}>
+        <Select
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)}
+        >
+          {/* An optional enum can be cleared back to "no value". */}
+          {!required && <option value="">(none)</option>}
           {slot.options.map((o) => (
             <option key={o} value={o}>
               {o}
@@ -193,12 +206,19 @@ export function SlotForm({ slots, values, onChange, variables = [] }: SlotFormPr
   return (
     <div className="flex flex-col gap-3">
       {slots.map((s) => (
-        <Field key={s.id} label={s.label} help={s.help} required={s.required}>
+        <Field
+          key={s.id}
+          label={s.label}
+          help={s.help}
+          required={s.required}
+          asGroup={s.slot.type === 'list' || s.slot.type === 'nestedRecipe'}
+        >
           <SlotInput
             slot={s.slot}
             value={values[s.id]}
             placeholder={s.placeholder}
             variables={variables}
+            required={s.required}
             onChange={(v) => onChange({ ...values, [s.id]: v })}
           />
         </Field>

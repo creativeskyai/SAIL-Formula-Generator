@@ -46,6 +46,15 @@ describe('Variables manager', () => {
     expect(useStore.getState().variables).toHaveLength(0);
   });
 
+  it('rejects a non-identifier variable name and does not add it', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Variables' }));
+    fireEvent.change(screen.getByPlaceholderText('caseId'), { target: { value: '1id' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    expect(screen.getByText(/valid identifier/i)).toBeInTheDocument();
+    expect(useStore.getState().variables).toHaveLength(0);
+  });
+
   it('a declared variable resolves in the validator (no unresolved error)', () => {
     useStore.getState().addVariable({ domain: 'ri', name: 'name', type: 'Text' });
     const variables = useStore.getState().variables;

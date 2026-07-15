@@ -715,6 +715,34 @@
         { "name": "key", "type": "Text", "required": true },
         { "name": "default", "type": "Any" }
       ]
+    },
+    {
+      "name": "a!map",
+      "category": "map",
+      "summary": "Construct a map from keyword key/value pairs.",
+      "returns": "Map",
+      "params": [{ "name": "keyValues", "type": "Any", "variadic": true }]
+    },
+    {
+      "name": "todatetime",
+      "category": "conversion",
+      "summary": "Convert a value to a datetime.",
+      "returns": "DateTime",
+      "params": [{ "name": "value", "type": "Any", "required": true }]
+    },
+    {
+      "name": "a!refreshVariable",
+      "category": "system",
+      "summary": "Wrap a local variable value with a refresh behavior.",
+      "returns": "Any",
+      "params": [
+        { "name": "value", "type": "Any", "keywordOnly": true },
+        { "name": "refreshAlways", "type": "Boolean", "keywordOnly": true },
+        { "name": "refreshOnReferencedVarChange", "type": "Boolean", "keywordOnly": true },
+        { "name": "refreshOnVarChange", "type": "Any", "keywordOnly": true },
+        { "name": "refreshAfter", "type": "Text", "keywordOnly": true },
+        { "name": "refreshInterval", "type": "Number", "keywordOnly": true }
+      ]
     }
   ]
 }

@@ -27,10 +27,14 @@ export function PresetBar({
   const fileRef = useRef<HTMLInputElement>(null);
 
   const save = () => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    savePreset(trimmed, buildPreset(recipeId, values, variables));
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+    if (!savePreset(trimmedName, buildPreset(recipeId, values, variables))) {
+      setError('Could not save preset — browser storage is unavailable or full.');
+      return;
+    }
     setName('');
+    setError(null);
     setNames(listPresetNames());
   };
 

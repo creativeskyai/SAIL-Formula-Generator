@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import App from '@/ui/App';
 import { useStore } from '@/ui/store';
@@ -65,11 +65,17 @@ describe('ErrorBoundary', () => {
     function Boom(): never {
       throw new Error('boom');
     }
-    render(
-      <ErrorBoundary>
-        <Boom />
-      </ErrorBoundary>,
-    );
-    expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
+    // React logs the caught error to console.error; silence the expected noise.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      render(
+        <ErrorBoundary>
+          <Boom />
+        </ErrorBoundary>,
+      );
+      expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

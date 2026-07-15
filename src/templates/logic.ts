@@ -65,8 +65,22 @@ export const localVariables: Recipe = {
     const values = (v.values as string[] | undefined) ?? [];
     const decls = names
       .map((n, i) => ({ name: (n ?? '').trim(), value: (values[i] ?? '').trim() }))
-      .filter((d) => d.name !== '')
-      .map((d) => kw(`local!${d.name}`, raw(d.value === '' ? 'null' : d.value)));
-    return call('a!localVariables', [...decls, pos(raw(v.body as string))]);
+      .filter((d) => d.name !== '');
+    const seen = new Set<string>();
+    for (const d of decls) {
+      if (!/^[A-Za-z_]\w*$/.test(d.name)) {
+        throw new Error(
+          `Invalid local variable name "${d.name}" — use letters, digits, and underscores only, not starting with a digit.`,
+        );
+      }
+      if (seen.has(d.name)) {
+        throw new Error(`Duplicate local variable name "${d.name}" — each must be unique.`);
+      }
+      seen.add(d.name);
+    }
+    return call('a!localVariables', [
+      ...decls.map((d) => kw(`local!${d.name}`, raw(d.value === '' ? 'null' : d.value))),
+      pos(raw(v.body as string)),
+    ]);
   },
 };
