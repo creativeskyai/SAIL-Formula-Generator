@@ -1,49 +1,125 @@
-@import 'tailwindcss';
+/* SAIL Formula Generator — design tokens, loosely following the Rocket Forge
+ * ink-on-paper language: fully monochrome surfaces (the accent IS ink), status
+ * colors for state only, hairline 1px borders, squared 0px corners, flat
+ * surfaces, Space Grotesk + Geist Mono (bundled — the app stays offline).
+ * Light and dark ship from one token set; `.dark` on <html> flips the values.
+ */
 
-@theme {
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-    'Liberation Mono', monospace;
-}
+@import 'tailwindcss';
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/geist-mono/400.css';
+@import '@fontsource/geist-mono/500.css';
 
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(240 10% 3.9%);
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-foreground: hsl(240 3.8% 46.1%);
-  --border: hsl(240 5.9% 90%);
-  --primary: hsl(240 5.9% 10%);
-  --primary-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --warning: hsl(38 92% 50%);
-  --info: hsl(217 91% 60%);
+  /* Paper: --background is the page, --surface the raised layer cards and
+   * inputs sit on. Cards pop lighter than the page in both themes. */
+  --background: oklch(0.9851 0 0);
+  --surface: oklch(1 0 0);
+  --foreground: oklch(0.2002 0 0);
+  --muted-foreground: oklch(0.5486 0 0);
+  /* Alpha hover wash — visible on page and surface alike, never equal to a
+   * border color (the old palette's dark --muted === --border bug). */
+  --muted: oklch(0 0 0 / 0.06);
+  --border: oklch(0.9249 0 0);
+  --border-strong: oklch(0.8761 0 0);
+  /* Ink accent: the primary button is ink inverted. */
+  --primary: oklch(0.2002 0 0);
+  --primary-hover: oklch(0.3012 0 0);
+  --primary-foreground: oklch(1 0 0);
+  /* Status — state only, never decorative. */
+  --destructive: oklch(0.5766 0.19 29.18);
+  --warning: oklch(0.649 0.1428 67.59);
+  --success: oklch(0.6148 0.1447 154.23);
+  --info: oklch(0.5486 0 0);
+
+  color-scheme: light;
 }
 
 .dark {
-  --background: hsl(240 10% 3.9%);
-  --foreground: hsl(0 0% 98%);
-  --muted: hsl(240 3.7% 15.9%);
-  --muted-foreground: hsl(240 5% 64.9%);
-  --border: hsl(240 3.7% 15.9%);
-  --primary: hsl(0 0% 98%);
-  --primary-foreground: hsl(240 5.9% 10%);
-  --destructive: hsl(0 62.8% 50.6%);
-  --warning: hsl(38 92% 50%);
-  --info: hsl(217 91% 60%);
+  --background: oklch(0.1867 0 0);
+  --surface: oklch(0.2264 0 0);
+  --foreground: oklch(0.9612 0 0);
+  --muted-foreground: oklch(0.6665 0 0);
+  --muted: oklch(1 0 0 / 0.07);
+  --border: oklch(0.2972 0 0);
+  --border-strong: oklch(0.3485 0 0);
+  --primary: oklch(0.9612 0 0);
+  --primary-hover: oklch(0.8699 0 0);
+  --primary-foreground: oklch(0.1867 0 0);
+  --destructive: oklch(0.6858 0.1682 28.25);
+  --warning: oklch(0.7378 0.1438 73.25);
+  --success: oklch(0.7142 0.152 155.25);
+  --info: oklch(0.6665 0 0);
+
+  /* Native widgets (select popups, checkboxes, datalists, scrollbars) render
+   * dark — the root cause of the old white-on-white dropdown options. */
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-destructive: var(--destructive);
   --color-warning: var(--warning);
+  --color-success: var(--success);
   --color-info: var(--info);
+}
+
+@theme {
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
+    Consolas, monospace;
+
+  /* Squared — corners are 0 everywhere; only circles use radius. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 }
 
 body {
   margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.02em;
+}
+
+/* One ink focus treatment everywhere: a 3px half-ink ring on keyboard
+ * navigation. The transparent outline keeps focus visible in forced-colors /
+ * high-contrast mode. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 50%, transparent);
+}
+
+/* Native select popups follow the theme even where color-scheme alone does
+ * not restyle the option list (Windows). */
+select option {
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
