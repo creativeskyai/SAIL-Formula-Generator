@@ -1,4 +1,7 @@
-import type { Diagnostic, Severity } from '@/core/types';
+import type { DeclaredVariable, Diagnostic, Severity } from '@/core/types';
+import type { BuildIssue } from '../lib/preview';
+import { Button } from './primitives';
+import { CREATED_TYPE } from './variableMenu';
 
 const SEVERITY_STYLE: Record<Severity, string> = {
   error: 'text-destructive',
@@ -15,9 +18,13 @@ const SEVERITY_LABEL: Record<Severity, string> = {
 export function Diagnostics({
   diagnostics,
   buildIssues,
+  onDeclareVariable,
 }: {
   diagnostics: Diagnostic[];
-  buildIssues: string[] | null;
+  buildIssues: BuildIssue[] | null;
+  /** Apply a diagnostic's one-click remedy (e.g. declare an unresolved
+   * variable). When absent, the "Declare …" affordance is suppressed. */
+  onDeclareVariable?: (v: DeclaredVariable) => void;
 }) {
   if (buildIssues && buildIssues.length > 0) {
     return (
@@ -26,7 +33,7 @@ export function Diagnostics({
         <ul className="flex flex-col gap-1 text-xs">
           {buildIssues.map((issue, i) => (
             <li key={i} className="text-warning">
-              {issue}
+              {issue.message}
             </li>
           ))}
         </ul>
@@ -49,6 +56,19 @@ export function Diagnostics({
             <span className="font-semibold">{SEVERITY_LABEL[d.severity]}:</span> {d.message}
             {d.path.length > 0 && (
               <span className="text-muted-foreground"> · at {d.path.join(' › ')}</span>
+            )}
+            {d.fix && onDeclareVariable && (
+              <Button
+                type="button"
+                variant="outline"
+                className="ml-2 px-1.5 py-0 text-[11px] font-normal"
+                title={`Declare ${d.fix.domain}!${d.fix.name} (as ${CREATED_TYPE}) so this reference resolves`}
+                onClick={() =>
+                  onDeclareVariable({ domain: d.fix!.domain, name: d.fix!.name, type: CREATED_TYPE })
+                }
+              >
+                Declare {d.fix.domain}!{d.fix.name}
+              </Button>
             )}
           </li>
         ))}

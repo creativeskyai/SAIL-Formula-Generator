@@ -121,6 +121,9 @@ interface AppState {
   selectRecipe: (id: string) => void;
   setValues: (id: string, values: Record<string, unknown>) => void;
   addVariable: (v: DeclaredVariable) => void;
+  /** Edit a declared variable in place (e.g. correct the type of an
+   * inline-created variable without a delete-and-re-add round-trip). */
+  updateVariable: (index: number, patch: Partial<DeclaredVariable>) => void;
   removeVariable: (index: number) => void;
   setExpanded: (b: boolean) => void;
   setComposeText: (t: string) => void;
@@ -140,6 +143,10 @@ export const useStore = create<AppState>((set) => ({
   setValues: (id, values) =>
     set((s) => ({ valuesByRecipe: { ...s.valuesByRecipe, [id]: values } })),
   addVariable: (v) => set((s) => ({ variables: [...s.variables, v] })),
+  updateVariable: (index, patch) =>
+    set((s) => ({
+      variables: s.variables.map((v, i) => (i === index ? { ...v, ...patch } : v)),
+    })),
   removeVariable: (index) =>
     set((s) => ({ variables: s.variables.filter((_, i) => i !== index) })),
   setExpanded: (expanded) => set({ expanded }),

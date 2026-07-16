@@ -157,7 +157,11 @@ export function GuidedMode() {
               onToggleExpanded={() => setExpanded(!expanded)}
               canCopy={!hasError}
             />
-            <Diagnostics diagnostics={preview.diagnostics} buildIssues={preview.buildIssues} />
+            <Diagnostics
+              diagnostics={preview.diagnostics}
+              buildIssues={preview.buildIssues}
+              onDeclareVariable={addVariable}
+            />
           </>
         ) : null}
       </section>

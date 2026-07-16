@@ -25,7 +25,13 @@ import type { VarDomain } from '@/core/ast';
 import type { DeclaredVariable } from '@/core/types';
 import { inputBase } from './primitives';
 import { cn } from '@/lib/utils';
-import { comboItems, useAnchoredRect, VariableOptions, type ComboItem } from './variableMenu';
+import {
+  comboItems,
+  CREATED_TYPE,
+  useAnchoredRect,
+  VariableOptions,
+  type ComboItem,
+} from './variableMenu';
 
 /** Characters that make up a reference token (`ri!total`). `!` is included so a
  * domain prefix reads as one token; `.`/`[]` accessors deliberately are not, so
@@ -44,6 +50,8 @@ interface ExpressionInputProps {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  /** Accessible name for the input when it isn't wrapped in a <label> (list rows). */
+  ariaLabel?: string;
   variables: DeclaredVariable[];
   domains?: VarDomain[];
   /** Declare a new variable inline. When absent, "create" rows are suppressed. */
@@ -54,6 +62,7 @@ export function ExpressionInput({
   value,
   onChange,
   placeholder,
+  ariaLabel,
   variables,
   domains,
   onCreateVariable,
@@ -106,7 +115,8 @@ export function ExpressionInput({
   };
 
   const choose = (item: ComboItem) => {
-    if (item.kind === 'create') onCreateVariable?.({ domain: item.domain, name: item.name, type: 'Text' });
+    if (item.kind === 'create')
+      onCreateVariable?.({ domain: item.domain, name: item.name, type: CREATED_TYPE });
     // Replace exactly the token the suggestions were computed against —
     // [token.start, token.start + token.text.length) — never the live caret,
     // which can have drifted (arrow keys / a reposition click) since the token
@@ -175,6 +185,7 @@ export function ExpressionInput({
         aria-controls={open ? listboxId : undefined}
         aria-autocomplete="list"
         aria-activedescendant={open && active >= 0 && items[active] ? `${baseId}-opt-${active}` : undefined}
+        aria-label={ariaLabel}
         autoComplete="off"
         spellCheck={false}
         value={value ?? ''}

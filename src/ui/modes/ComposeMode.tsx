@@ -4,12 +4,20 @@ import { EditorView } from '@codemirror/view';
 import { catalog, type FunctionSpec } from '@/core/catalog';
 import { useStore } from '../store';
 import { analyzeCompose, buildSkeleton } from '../lib/compose';
-import { sail, sailAutocomplete } from '../sail-language';
+import { sail, sailAutocomplete, type VariableAssist } from '../sail-language';
 import { Button, TextInput } from '../components/primitives';
 import { cn } from '@/lib/utils';
 
+// Read live variables and declare inline straight from the store singleton, so
+// the completion source stays a stable module-level identity (no per-keystroke
+// CodeMirror reconfigure) while always reflecting the current declarations.
+const ASSIST: VariableAssist = {
+  getVariables: () => useStore.getState().variables,
+  onCreateVariable: (v) => useStore.getState().addVariable(v),
+};
+
 // Stable identities so CodeMirror doesn't reconfigure on every keystroke.
-const EXTENSIONS = [sail(), sailAutocomplete(), EditorView.lineWrapping];
+const EXTENSIONS = [sail(), sailAutocomplete(ASSIST), EditorView.lineWrapping];
 // Autocompletion comes from the SAIL source above, so disable basicSetup's
 // built-in (source-less) one — otherwise two completion configs coexist.
 const BASIC_SETUP = { lineNumbers: true, foldGutter: false, autocompletion: false } as const;
@@ -17,6 +25,7 @@ const BASIC_SETUP = { lineNumbers: true, foldGutter: false, autocompletion: fals
 export function ComposeMode() {
   const composeText = useStore((s) => s.composeText);
   const setComposeText = useStore((s) => s.setComposeText);
+  const variables = useStore((s) => s.variables);
   const theme = useStore((s) => s.theme);
   const [query, setQuery] = useState('');
   const [copied, setCopied] = useState(false);
@@ -34,7 +43,10 @@ export function ComposeMode() {
     return groups;
   }, [query]);
 
-  const analysis = useMemo(() => analyzeCompose(composeText), [composeText]);
+  const analysis = useMemo(
+    () => analyzeCompose(composeText, variables),
+    [composeText, variables],
+  );
 
   const insert = (spec: FunctionSpec) => {
     const snippet = buildSkeleton(spec);
@@ -89,9 +101,10 @@ export function ComposeMode() {
       <div className="flex flex-col gap-2 lg:min-h-0">
         <div className="flex items-start justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            Click a function to insert its skeleton, or start typing for autocomplete — then edit
-            freely. Validation here checks bracket balance and known function names; use Guided mode
-            for fully-validated output.
+            Click a function to insert its skeleton, or start typing for autocomplete — functions,
+            your declared variables, and inline &ldquo;Create ri!name&rdquo; entries all appear.
+            Validation here checks bracket balance, known function names, and unresolved variables;
+            use Guided mode for fully-validated output.
           </p>
           <div className="flex shrink-0 items-center gap-2">
             <Button
@@ -137,6 +150,12 @@ export function ComposeMode() {
           {analysis.unknownFunctions.length > 0 && (
             <span className="text-warning">
               Unrecognized functions: {analysis.unknownFunctions.join(', ')}
+            </span>
+          )}
+          {analysis.unresolvedVariables.length > 0 && (
+            <span className="text-warning">
+              Unresolved variables: {analysis.unresolvedVariables.join(', ')} — declare them in the
+              Variables tab, or accept a &ldquo;Create&rdquo; suggestion as you type.
             </span>
           )}
         </div>

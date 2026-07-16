@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { SAIL_TYPES } from '@/core/catalog';
 import type { SailType, VarDomain } from '@/core/ast';
 import { useStore } from '../store';
@@ -9,12 +9,16 @@ const DECLARABLE_DOMAINS: VarDomain[] = ['ri', 'local'];
 export function VariablesMode() {
   const variables = useStore((s) => s.variables);
   const addVariable = useStore((s) => s.addVariable);
+  const updateVariable = useStore((s) => s.updateVariable);
   const removeVariable = useStore((s) => s.removeVariable);
+  const valuesByRecipe = useStore((s) => s.valuesByRecipe);
+  const composeText = useStore((s) => s.composeText);
 
   const [domain, setDomain] = useState<VarDomain>('ri');
   const [name, setName] = useState('');
   const [type, setType] = useState<SailType>('Text');
   const [error, setError] = useState<string | null>(null);
+  const errorId = useId();
 
   const add = () => {
     const trimmedName = name.trim();
@@ -32,14 +36,23 @@ export function VariablesMode() {
     setError(null);
   };
 
+  /** Best-effort "still referenced somewhere" check: the ref string appearing
+   * in any stored form value or the Compose text. Cheap and read-only — it
+   * flags a removal the user may regret, without blocking it. */
+  const inUse = (v: { domain: VarDomain; name: string }): boolean => {
+    const ref = `${v.domain}!${v.name}`;
+    return JSON.stringify(valuesByRecipe).includes(ref) || composeText.includes(ref);
+  };
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div>
         <h2 className="text-base font-semibold">Variables</h2>
         <p className="text-sm text-muted-foreground">
           Declare <code>ri!</code> (rule inputs) and <code>local!</code> variables. They feed the
-          Guided-mode field suggestions and resolve the validator&apos;s unresolved-reference check.
-          You can also create them inline from any reference or expression field in Guided mode.
+          Guided-mode field suggestions, Compose autocomplete, and resolve the validator&apos;s
+          unresolved-reference check. You can also create them inline from any reference or
+          expression field — inline-created variables start as Text; adjust the type here.
         </p>
       </div>
 
@@ -61,7 +74,13 @@ export function VariablesMode() {
           <TextInput
             value={name}
             placeholder="caseId"
-            onChange={(e) => setName(e.target.value)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
+            onChange={(e) => {
+              setName(e.target.value);
+              // A stale error must not linger while the user fixes the name.
+              setError(null);
+            }}
             onKeyDown={(e) => e.key === 'Enter' && add()}
           />
         </Field>
@@ -78,7 +97,11 @@ export function VariablesMode() {
           Add
         </Button>
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p id={errorId} role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
 
       {variables.length === 0 ? (
         <p className="text-sm text-muted-foreground">No variables declared yet.</p>
@@ -91,15 +114,39 @@ export function VariablesMode() {
             {variables.map((v, i) => (
               <li
                 key={`${v.domain}!${v.name}-${i}`}
-                className="flex items-center justify-between border border-border px-3 py-1.5"
+                className="flex items-center justify-between gap-2 border border-border px-3 py-1.5"
               >
-                <span className="font-mono text-sm">
-                  {v.domain}!{v.name}
-                  {v.type && <span className="text-muted-foreground"> : {v.type}</span>}
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="font-mono text-sm">
+                    {v.domain}!{v.name}
+                  </span>
+                  {inUse(v) && (
+                    <span
+                      className="shrink-0 border border-border px-1.5 text-[10px] uppercase tracking-wide text-muted-foreground"
+                      title="Referenced by a form value or the Compose editor — removing it will leave unresolved references"
+                    >
+                      in use
+                    </span>
+                  )}
                 </span>
-                <Button type="button" variant="ghost" onClick={() => removeVariable(i)}>
-                  Remove
-                </Button>
+                <span className="flex shrink-0 items-center gap-1">
+                  <Select
+                    className="w-auto py-0.5 text-xs"
+                    value={v.type ?? 'Text'}
+                    aria-label={`Type of ${v.domain}!${v.name}`}
+                    title="Change this variable's type in place — no need to remove and re-add"
+                    onChange={(e) => updateVariable(i, { type: e.target.value as SailType })}
+                  >
+                    {SAIL_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </Select>
+                  <Button type="button" variant="ghost" onClick={() => removeVariable(i)}>
+                    Remove
+                  </Button>
+                </span>
               </li>
             ))}
           </ul>

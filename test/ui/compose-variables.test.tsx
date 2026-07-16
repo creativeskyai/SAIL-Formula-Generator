@@ -72,6 +72,29 @@ describe('Variables manager', () => {
     expect(useStore.getState().variables).toHaveLength(0);
   });
 
+  it('edits a declared variable type in place without re-adding it', () => {
+    useStore.getState().addVariable({ domain: 'ri', name: 'caseId', type: 'Text' });
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Variables' }));
+
+    const typeSelect = screen.getByRole('combobox', { name: /Type of ri!caseId/i });
+    fireEvent.change(typeSelect, { target: { value: 'Integer' } });
+
+    expect(useStore.getState().variables).toEqual([
+      { domain: 'ri', name: 'caseId', type: 'Integer' },
+    ]);
+  });
+
+  it('marks a variable "in use" when a stored form value references it', () => {
+    useStore.setState({
+      variables: [{ domain: 'ri', name: 'caseId', type: 'Text' }],
+      valuesByRecipe: { 'text-field': { label: 'X', value: 'ri!caseId' } },
+    });
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Variables' }));
+    expect(screen.getByText('in use')).toBeInTheDocument();
+  });
+
   it('a declared variable resolves in the validator (no unresolved error)', () => {
     useStore.getState().addVariable({ domain: 'ri', name: 'name', type: 'Text' });
     const variables = useStore.getState().variables;

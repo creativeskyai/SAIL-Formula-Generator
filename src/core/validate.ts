@@ -101,6 +101,7 @@ export function validate(
           severity: 'error',
           message: `Unresolved variable ${node.domain}!${node.name} — declare it in the Variables manager.`,
           path,
+          fix: { kind: 'declareVariable', domain: node.domain, name: node.name },
         });
       }
     }

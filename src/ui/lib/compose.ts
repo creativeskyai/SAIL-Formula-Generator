@@ -5,6 +5,7 @@
  */
 
 import { catalog, type FunctionSpec } from '@/core/catalog';
+import type { DeclaredVariable } from '@/core/types';
 import { isRawTextBalanced } from '@/core/validate';
 
 /** A function-with-params stub to drop into the free-text pane. */
@@ -68,17 +69,25 @@ function stripLiteralsAndComments(text: string): string {
 export interface ComposeAnalysis {
   balanced: boolean;
   unknownFunctions: string[];
+  /** `ri!`/`local!` references not declared in the Variables manager (and, for
+   * `local!`, not assigned inline in the text itself). */
+  unresolvedVariables: string[];
 }
 
 const FN_CALL = /((?:a!|fn!|rule!)?[A-Za-z_]\w*)\s*\(/g;
+const VAR_REF = /(?<![\w!])(ri|local)!([A-Za-z_]\w*)/g;
+/** `local!name:` is keyword-assignment position inside a!localVariables — that
+ * IS the declaration, so such names must not be flagged as unresolved. */
+const LOCAL_DECL = /(?<![\w!])local!([A-Za-z_]\w*)\s*:/g;
 
-export function analyzeCompose(text: string): ComposeAnalysis {
+export function analyzeCompose(
+  text: string,
+  variables: DeclaredVariable[] = [],
+): ComposeAnalysis {
   const balanced = isRawTextBalanced(text);
   const stripped = stripLiteralsAndComments(text);
   const names = new Set<string>();
-  let m: RegExpExecArray | null;
-  while ((m = FN_CALL.exec(stripped)) !== null) names.add(m[1]);
-  FN_CALL.lastIndex = 0;
+  for (const m of stripped.matchAll(FN_CALL)) names.add(m[1]);
   // SAIL function names are case-insensitive; the catalog stores canonical case.
   const known = new Set(catalog.all().map((f) => f.name.toLowerCase()));
   const unknownFunctions = [...names].filter((n) => {
@@ -87,5 +96,13 @@ export function analyzeCompose(text: string): ComposeAnalysis {
     const bare = (n.startsWith('fn!') ? n.slice(3) : n).toLowerCase();
     return !known.has(bare);
   });
-  return { balanced, unknownFunctions };
+
+  const declared = new Set(variables.map((v) => `${v.domain}!${v.name}`));
+  for (const m of stripped.matchAll(LOCAL_DECL)) declared.add(`local!${m[1]}`);
+  const unresolved = new Set<string>();
+  for (const m of stripped.matchAll(VAR_REF)) {
+    const ref = `${m[1]}!${m[2]}`;
+    if (!declared.has(ref)) unresolved.add(ref);
+  }
+  return { balanced, unknownFunctions, unresolvedVariables: [...unresolved] };
 }

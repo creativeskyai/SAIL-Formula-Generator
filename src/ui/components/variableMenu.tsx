@@ -14,10 +14,14 @@ import type { VarDomain } from '@/core/ast';
 import type { DeclaredVariable } from '@/core/types';
 import { cn } from '@/lib/utils';
 
-const IDENT_RE = /^[A-Za-z_]\w*$/;
+export const IDENT_RE = /^[A-Za-z_]\w*$/;
 /** Only these domains are user-declarable (fv!, pv!, cons! etc. are supplied by
  * the platform, not created here) — mirrors VariablesMode's DECLARABLE_DOMAINS. */
-const CREATABLE: VarDomain[] = ['ri', 'local'];
+export const CREATABLE: VarDomain[] = ['ri', 'local'];
+
+/** The type every inline-create flow assigns; adjustable afterwards on the
+ * Variables page (or via updateVariable). Disclosed on the create rows. */
+export const CREATED_TYPE = 'Text';
 
 export type ComboItem =
   | { kind: 'existing'; ref: string; type?: string }
@@ -131,6 +135,7 @@ export function VariableOptions({
     <ul
       ref={listRef}
       role="listbox"
+      aria-label="Variable suggestions"
       id={listboxId}
       style={{ position: 'fixed', left: rect.left, top: rect.top + 2, width: rect.width }}
       className="z-50 max-h-56 overflow-auto border border-border-strong bg-surface py-0.5 text-sm shadow-lg"
@@ -170,10 +175,15 @@ export function VariableOptions({
                 {item.type && <span className="text-[11px] text-muted-foreground">{item.type}</span>}
               </>
             ) : (
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <Plus className="h-3.5 w-3.5" />
-                Create <span className="text-foreground">{item.ref}</span>
-              </span>
+              <>
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <Plus className="h-3.5 w-3.5" />
+                  Create <span className="text-foreground">{item.ref}</span>
+                </span>
+                {/* Disclose the type the new variable gets (editable later on
+                 * the Variables page), so the default is never a surprise. */}
+                <span className="text-[11px] text-muted-foreground">{CREATED_TYPE}</span>
+              </>
             )}
           </li>
         ))

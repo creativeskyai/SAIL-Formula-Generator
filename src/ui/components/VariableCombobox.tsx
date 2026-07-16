@@ -23,7 +23,13 @@ import type { VarDomain } from '@/core/ast';
 import type { DeclaredVariable } from '@/core/types';
 import { inputBase } from './primitives';
 import { cn } from '@/lib/utils';
-import { comboItems, useAnchoredRect, VariableOptions, type ComboItem } from './variableMenu';
+import {
+  comboItems,
+  CREATED_TYPE,
+  useAnchoredRect,
+  VariableOptions,
+  type ComboItem,
+} from './variableMenu';
 
 // Re-exported so the pure ranking rules keep one public import path.
 export { comboItems, type ComboItem };
@@ -32,6 +38,8 @@ interface VariableComboboxProps {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  /** Accessible name for the input when it isn't wrapped in a <label> (list rows). */
+  ariaLabel?: string;
   variables: DeclaredVariable[];
   domains?: VarDomain[];
   /** Declare a new variable inline. When absent, "create" rows are suppressed. */
@@ -42,12 +50,16 @@ export function VariableCombobox({
   value,
   onChange,
   placeholder,
+  ariaLabel,
   variables,
   domains,
   onCreateVariable,
 }: VariableComboboxProps) {
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(0);
+  // -1 = passive (menu open, nothing highlighted) so Enter never hijacks a
+  // keystroke the user meant as "keep my typed reference" — matching
+  // ExpressionInput's contract exactly.
+  const [active, setActive] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const baseId = useId();
@@ -58,7 +70,7 @@ export function VariableCombobox({
 
   // Keep the highlighted index inside the (possibly shrunk) list.
   useEffect(() => {
-    if (active > items.length - 1) setActive(items.length > 0 ? items.length - 1 : 0);
+    if (active > items.length - 1) setActive(items.length > 0 ? items.length - 1 : -1);
   }, [items.length, active]);
 
   // Dismiss on a pointer-down anywhere outside the input and the portaled panel.
@@ -75,28 +87,37 @@ export function VariableCombobox({
 
   // Scroll the highlighted option into view during keyboard navigation.
   useEffect(() => {
-    if (open) document.getElementById(`${baseId}-opt-${active}`)?.scrollIntoView({ block: 'nearest' });
+    if (open && active >= 0)
+      document.getElementById(`${baseId}-opt-${active}`)?.scrollIntoView({ block: 'nearest' });
   }, [active, open, baseId]);
 
   const choose = (item: ComboItem) => {
-    if (item.kind === 'create') onCreateVariable?.({ domain: item.domain, name: item.name, type: 'Text' });
+    if (item.kind === 'create')
+      onCreateVariable?.({ domain: item.domain, name: item.name, type: CREATED_TYPE });
     onChange(item.ref);
     setOpen(false);
+    setActive(-1);
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        if (!open) setOpen(true);
-        else setActive((i) => Math.min(items.length - 1, i + 1));
+        if (!open) {
+          setOpen(true);
+          setActive(0);
+        } else {
+          setActive((i) => Math.min(items.length - 1, i + 1));
+        }
         break;
       case 'ArrowUp':
         e.preventDefault();
         setActive((i) => Math.max(0, i - 1));
         break;
       case 'Enter':
-        if (open && items[active]) {
+        // Only act when the user has explicitly navigated into the list — a
+        // passive (just-typed) menu leaves Enter to the field.
+        if (open && active >= 0 && items[active]) {
           e.preventDefault();
           choose(items[active]);
         }
@@ -123,7 +144,10 @@ export function VariableCombobox({
         aria-expanded={open}
         aria-controls={open ? listboxId : undefined}
         aria-autocomplete="list"
-        aria-activedescendant={open && items[active] ? `${baseId}-opt-${active}` : undefined}
+        aria-activedescendant={
+          open && active >= 0 && items[active] ? `${baseId}-opt-${active}` : undefined
+        }
+        aria-label={ariaLabel}
         autoComplete="off"
         spellCheck={false}
         value={value ?? ''}
@@ -132,7 +156,7 @@ export function VariableCombobox({
         onChange={(e) => {
           onChange(e.target.value);
           setOpen(true);
-          setActive(0);
+          setActive(-1);
         }}
         onClick={() => setOpen(true)}
         onKeyDown={onKeyDown}
