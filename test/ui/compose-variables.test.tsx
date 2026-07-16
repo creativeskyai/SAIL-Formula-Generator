@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import App from '@/ui/App';
+import { markTourSeen } from '@/ui/components/WelcomeTour';
 import { useStore } from '@/ui/store';
 import { computePreview } from '@/ui/lib/preview';
 import { EXPANDED } from '@/core/serialize';
 
 beforeEach(() => {
   cleanup();
+  markTourSeen(); // these tests model a returning user - the tour stays closed
   useStore.setState({
     mode: 'guided',
     selectedRecipeId: null,
@@ -76,7 +78,8 @@ describe('Variables manager', () => {
     ]);
     expect(screen.getByText('ri!caseId', { exact: false })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    // Each row's remove button is named after its variable (WCAG 4.1.2).
+    fireEvent.click(screen.getByRole('button', { name: 'Remove ri!caseId' }));
     expect(useStore.getState().variables).toHaveLength(0);
   });
 

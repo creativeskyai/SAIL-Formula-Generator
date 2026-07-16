@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import App from '@/ui/App';
+import { markTourSeen } from '@/ui/components/WelcomeTour';
 import { useStore, SAMPLE_RECORD_TYPE_REF } from '@/ui/store';
 import { initialValues } from '@/ui/components/SlotForm';
 import { getRecipe } from '@/templates';
@@ -21,6 +22,7 @@ function resetStore() {
 beforeEach(() => {
   cleanup();
   localStorage.clear();
+  markTourSeen(); // these tests model a returning user - the tour stays closed
   resetStore();
 });
 

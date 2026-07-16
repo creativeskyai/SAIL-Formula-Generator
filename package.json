@@ -19,6 +19,7 @@
     "@codemirror/view": "^6.36.4",
     "@fontsource/geist-mono": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
+    "@lezer/highlight": "^1.2.3",
     "@uiw/react-codemirror": "^4.23.10",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",

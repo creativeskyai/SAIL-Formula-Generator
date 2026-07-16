@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import App from '@/ui/App';
+import { markTourSeen } from '@/ui/components/WelcomeTour';
 import { useStore } from '@/ui/store';
 import { comboItems } from '@/ui/components/VariableCombobox';
 import type { DeclaredVariable } from '@/core/types';
 
 beforeEach(() => {
   cleanup();
+  markTourSeen(); // these tests model a returning user - the tour stays closed
   useStore.setState({
     mode: 'guided',
     selectedRecipeId: null,

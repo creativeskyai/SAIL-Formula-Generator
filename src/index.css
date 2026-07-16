@@ -129,6 +129,18 @@ h4 {
   box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 50%, transparent);
 }
 
+/* CodeMirror's focus lands on a contenteditable div the selector above can't
+ * see, leaving only the caret as an indicator. Ring the editor frame instead —
+ * an inward outline, because the editors sit in overflow containers that would
+ * clip anything drawn outside, and an inset box-shadow would paint UNDER the
+ * opaque line-number gutter (outlines paint last in the stacking context, on
+ * top of it). Text-entry elements match :focus-visible on any focus, so
+ * ring-on-every-focus is exactly how the plain inputs already behave. */
+.cm-editor.cm-focused {
+  outline: 3px solid color-mix(in oklch, var(--primary) 50%, transparent);
+  outline-offset: -3px;
+}
+
 /* Native select popups follow the theme even where color-scheme alone does
  * not restyle the option list (Windows). */
 select option {

@@ -5,7 +5,14 @@
  * operators.
  */
 
-import { StreamLanguage, LanguageSupport } from '@codemirror/language';
+import {
+  StreamLanguage,
+  LanguageSupport,
+  HighlightStyle,
+  syntaxHighlighting,
+} from '@codemirror/language';
+import { tags } from '@lezer/highlight';
+import { Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import {
   autocompletion,
@@ -77,8 +84,34 @@ const sailLanguage = StreamLanguage.define<Record<string, never>>({
   },
 });
 
+// The stock editor themes miss WCAG AA contrast (4.5:1) against their own
+// active-line backgrounds for a few of our token colors. Dark (oneDark):
+// variableName coral #e06c75 (~4.4:1), keyword violet #c678dd (~4.4:1), and
+// comment gray #5c6370 (~2.2:1). Light: typeName green #008855 (~4.3:1).
+// Nudge just those colors, hue preserved. Prec.highest so these win the
+// stylesheet-order race against the themes' own highlight styles.
+const contrastFixes = [
+  Prec.highest(
+    syntaxHighlighting(
+      HighlightStyle.define(
+        [
+          { tag: tags.variableName, color: '#e87f88' },
+          { tag: tags.keyword, color: '#cd85e0' },
+          { tag: tags.comment, color: '#939db0' },
+        ],
+        { themeType: 'dark' },
+      ),
+    ),
+  ),
+  Prec.highest(
+    syntaxHighlighting(
+      HighlightStyle.define([{ tag: tags.typeName, color: '#007c4e' }], { themeType: 'light' }),
+    ),
+  ),
+];
+
 export function sail(): LanguageSupport {
-  return new LanguageSupport(sailLanguage);
+  return new LanguageSupport(sailLanguage, contrastFixes);
 }
 
 // --- Autocomplete (Compose mode) ---------------------------------------------

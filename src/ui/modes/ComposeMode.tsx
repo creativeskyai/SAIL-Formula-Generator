@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { catalog, type FunctionSpec } from '@/core/catalog';
@@ -79,14 +79,29 @@ export function ComposeMode() {
     }
   };
 
-  const copy = async () => {
+  const copy = useCallback(async () => {
     if (!composeText) return;
     const ok = await copyText(composeText);
     // Success and failure both get visible + announced feedback — a copy that
     // silently did nothing is worse than an error message.
     setCopyStatus(ok ? 'copied' : 'failed');
     setTimeout(() => setCopyStatus('idle'), ok ? 1500 : 4000);
-  };
+  }, [composeText]);
+
+  // Cmd/Ctrl+Enter copies here too — the same shortcut Guided mode advertises.
+  // Capture phase + stopPropagation so it wins over CodeMirror's own Mod-Enter
+  // binding (insert blank line) when focus is inside the editor.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        void copy();
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [copy]);
 
   return (
     <div className="grid min-h-full grid-cols-1 gap-4 lg:h-full lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -146,7 +161,7 @@ export function ComposeMode() {
               onClick={copy}
               disabled={!composeText}
               className={copyStatus === 'failed' ? 'bg-destructive' : undefined}
-              title="Copy the expression to the clipboard"
+              title="Copy the expression to the clipboard (Ctrl+Enter)"
             >
               {copyStatus === 'idle' ? 'Copy' : copyStatus === 'copied' ? 'Copied' : 'Copy failed'}
             </Button>
