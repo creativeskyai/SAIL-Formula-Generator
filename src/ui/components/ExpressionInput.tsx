@@ -14,9 +14,12 @@
  *  - A braces button opens the same menu on demand to browse/insert any declared
  *    variable, even from a bare or empty caret.
  *
- * A bare identifier (e.g. `sum`) does NOT auto-open the menu — it is just as
- * likely a function name, and popping "Create ri!sum" mid-formula would be
- * noise. The `!` is the unambiguous "I'm writing a variable reference" signal.
+ * The menu auto-opens only for a token that starts with a declarable domain
+ * prefix (`ri!` / `local!`) — the only references that can match a declared
+ * variable or be created here. A bare identifier (`sum`) or a non-declarable
+ * prefix (`a!`, `fn!`, `fv!`, `cons!`, `pv!`) does NOT auto-open: those are
+ * function calls or platform-supplied values, and popping an empty "Create…"
+ * panel over the field on the most common thing typed here would be pure noise.
  */
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
@@ -25,7 +28,13 @@ import type { VarDomain } from '@/core/ast';
 import type { DeclaredVariable } from '@/core/types';
 import { inputBase } from './primitives';
 import { cn } from '@/lib/utils';
-import { comboItems, useAnchoredRect, VariableOptions, type ComboItem } from './variableMenu';
+import {
+  comboItems,
+  CREATED_TYPE,
+  useAnchoredRect,
+  VariableOptions,
+  type ComboItem,
+} from './variableMenu';
 
 /** Characters that make up a reference token (`ri!total`). `!` is included so a
  * domain prefix reads as one token; `.`/`[]` accessors deliberately are not, so
@@ -44,6 +53,8 @@ interface ExpressionInputProps {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  /** Accessible name for the input when it isn't wrapped in a <label> (list rows). */
+  ariaLabel?: string;
   variables: DeclaredVariable[];
   domains?: VarDomain[];
   /** Declare a new variable inline. When absent, "create" rows are suppressed. */
@@ -54,6 +65,7 @@ export function ExpressionInput({
   value,
   onChange,
   placeholder,
+  ariaLabel,
   variables,
   domains,
   onCreateVariable,
@@ -106,7 +118,8 @@ export function ExpressionInput({
   };
 
   const choose = (item: ComboItem) => {
-    if (item.kind === 'create') onCreateVariable?.({ domain: item.domain, name: item.name, type: 'Text' });
+    if (item.kind === 'create')
+      onCreateVariable?.({ domain: item.domain, name: item.name, type: CREATED_TYPE });
     // Replace exactly the token the suggestions were computed against —
     // [token.start, token.start + token.text.length) — never the live caret,
     // which can have drifted (arrow keys / a reposition click) since the token
@@ -175,6 +188,7 @@ export function ExpressionInput({
         aria-controls={open ? listboxId : undefined}
         aria-autocomplete="list"
         aria-activedescendant={open && active >= 0 && items[active] ? `${baseId}-opt-${active}` : undefined}
+        aria-label={ariaLabel}
         autoComplete="off"
         spellCheck={false}
         value={value ?? ''}
@@ -184,8 +198,11 @@ export function ExpressionInput({
           onChange(e.target.value);
           const t = tokenAt(e.target.value, e.target.selectionStart ?? e.target.value.length);
           setToken(t);
-          // Auto-open only for an unambiguous reference token (contains `!`).
-          setOpen(t.text.includes('!'));
+          // Auto-open only for a declarable-domain token (`ri!`/`local!`). Other
+          // `!`-tokens (a!, fn!, fv!, cons!, pv!) are functions or platform
+          // values that can neither match nor be created, so opening would show
+          // an empty panel over the field's primary input.
+          setOpen(/^(ri|local)!/.test(t.text));
           setActive(-1);
         }}
         onKeyDown={onKeyDown}

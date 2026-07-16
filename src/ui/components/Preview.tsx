@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { sail } from '../sail-language';
@@ -19,25 +18,19 @@ export function Preview({
   expanded,
   onToggleExpanded,
   canCopy,
+  copied,
+  onCopy,
 }: {
   code: string;
   expanded: boolean;
   onToggleExpanded: () => void;
   canCopy: boolean;
+  /** Copy state + handler are owned by the parent so the Ctrl+Enter shortcut
+   * and the button share one confirmation path. */
+  copied: boolean;
+  onCopy: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
   const theme = useStore((s) => s.theme);
-
-  const copy = async () => {
-    if (!code || !navigator.clipboard) return;
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* clipboard write denied (permissions / non-secure context) — no-op */
-    }
-  };
 
   const hasRecordRef = code.includes('recordType!');
 
@@ -60,7 +53,7 @@ export function Preview({
           </Button>
           <Button
             type="button"
-            onClick={copy}
+            onClick={onCopy}
             disabled={!canCopy || !code}
             title={canCopy ? 'Copy SAIL to clipboard (Ctrl+Enter)' : 'Resolve errors before copying'}
           >
@@ -84,7 +77,7 @@ export function Preview({
         />
       </div>
       {hasRecordRef && (
-        <p className="text-[11px] text-muted-foreground/80">
+        <p className="text-[11px] text-muted-foreground">
           Record references are UUID-qualified when copied from a real Appian environment —
           you may need to re-link them in Appian&apos;s editor after pasting.
         </p>

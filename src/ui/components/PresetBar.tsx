@@ -29,8 +29,12 @@ export function PresetBar({
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Saving under an existing name overwrites it (savePreset does all[name] = …).
+  // Surface that as a deliberate "Replace", never a silent clobber.
+  const trimmedName = name.trim();
+  const isReplace = trimmedName !== '' && names.includes(trimmedName);
+
   const save = () => {
-    const trimmedName = name.trim();
     if (!trimmedName) return;
     if (!savePreset(trimmedName, buildPreset(recipeId, values, variables))) {
       setError('Could not save preset — browser storage is unavailable or full.');
@@ -106,10 +110,14 @@ export function PresetBar({
           variant="outline"
           type="button"
           onClick={save}
-          disabled={!name.trim()}
-          title="Save the current form values and variables under this name (browser storage)"
+          disabled={!trimmedName}
+          title={
+            isReplace
+              ? `Replace the existing preset "${trimmedName}" with the current form values and variables`
+              : 'Save the current form values and variables under this name (browser storage)'
+          }
         >
-          Save
+          {isReplace ? 'Replace' : 'Save'}
         </Button>
         {names.length > 0 && (
           <>
@@ -163,6 +171,11 @@ export function PresetBar({
           onChange={onFile}
         />
       </div>
+      {isReplace && !error && (
+        <span className="text-xs text-warning">
+          A preset named &ldquo;{trimmedName}&rdquo; already exists — saving will replace it.
+        </span>
+      )}
       {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   );

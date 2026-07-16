@@ -15,6 +15,8 @@ import {
   type CompletionResult,
 } from '@codemirror/autocomplete';
 import { catalog } from '@/core/catalog';
+import type { DeclaredVariable } from '@/core/types';
+import { CREATABLE, CREATED_TYPE, IDENT_RE } from './components/variableMenu';
 
 const VAR_DOMAINS = 'ri|local|pv|ac|cons|rule|fv|tp|rf|rp|pp';
 
@@ -95,16 +97,98 @@ const FUNCTION_COMPLETIONS: Completion[] = catalog.all().map((f) => ({
 // the completed token.
 const TOKEN = /[\w!]*/;
 
-function completeSail(context: CompletionContext): CompletionResult | null {
-  const word = context.matchBefore(TOKEN);
-  if (!word || (word.from === word.to && !context.explicit)) return null;
-  return { from: word.from, options: FUNCTION_COMPLETIONS, validFor: /^[\w!]*$/ };
+export interface VariableAssist {
+  /** Read the currently declared variables (called per keystroke — pass a
+   * store getter, not a snapshot). */
+  getVariables: () => DeclaredVariable[];
+  /** Declare a new variable inline (the "Create ri!name" completions). */
+  onCreateVariable?: (v: DeclaredVariable) => void;
 }
 
-/** CodeMirror extension: catalog-function autocomplete for the Compose editor.
- * autocompletion() already includes the completion keymap by default; we also
- * register completionKeymap explicitly so ArrowUp/Down/Enter/Escape navigation
- * is guaranteed regardless of the host editor's basicSetup keymap options. */
-export function sailAutocomplete() {
-  return [autocompletion({ override: [completeSail] }), keymap.of(completionKeymap)];
+/** Variable completions for the token being typed: every declared variable,
+ * plus "Create ri!name / local!name" entries for a typed-but-undeclared
+ * `ri!`/`local!` reference — the same inline-declaration flow the Guided-mode
+ * fields have. Pure and exported so the rules are unit-testable without an
+ * editor. The `create` marker is consumed by the apply callback built in
+ * `sailAutocomplete`. */
+export function variableCompletions(
+  token: string,
+  variables: DeclaredVariable[],
+  canCreate: boolean,
+): (Completion & { create?: DeclaredVariable })[] {
+  const existing = variables.map((v) => ({
+    label: `${v.domain}!${v.name}`,
+    type: 'variable',
+    detail: v.type,
+    boost: 1, // declared variables above the (long) function list
+  }));
+  const explicit = /^(ri|local)!([A-Za-z_]\w*)$/.exec(token);
+  if (!canCreate || !explicit) return existing;
+  const domain = explicit[1] as DeclaredVariable['domain'];
+  const name = explicit[2];
+  if (
+    !CREATABLE.includes(domain) ||
+    !IDENT_RE.test(name) ||
+    // Suppress the create row when the typed name is a prefix of (or equal to) an
+    // already-declared variable in this domain: the user is completing toward it,
+    // not creating a new one. Without this, `ri!ca` (with `ri!caseId` declared)
+    // would offer to create a junk `ri!ca`, and — being an exact-label match —
+    // CodeMirror would rank it above the prefix-matched existing variable.
+    variables.some((v) => v.domain === domain && v.name.startsWith(name))
+  ) {
+    return existing;
+  }
+  return [
+    ...existing,
+    {
+      label: token,
+      displayLabel: `Create ${token}`,
+      type: 'variable',
+      detail: CREATED_TYPE,
+      boost: 2,
+      create: { domain, name, type: CREATED_TYPE },
+    },
+  ];
+}
+
+/** CodeMirror extension: catalog-function autocomplete for the Compose editor,
+ * plus (when `assist` is provided) declared-variable suggestions and inline
+ * "Create ri!name" entries. autocompletion() already includes the completion
+ * keymap by default; we also register completionKeymap explicitly so
+ * ArrowUp/Down/Enter/Escape navigation is guaranteed regardless of the host
+ * editor's basicSetup keymap options. */
+export function sailAutocomplete(assist?: VariableAssist) {
+  function completeSail(context: CompletionContext): CompletionResult | null {
+    const word = context.matchBefore(TOKEN);
+    if (!word || (word.from === word.to && !context.explicit)) return null;
+    const token = context.state.sliceDoc(word.from, word.to);
+    const vars = assist
+      ? variableCompletions(token, assist.getVariables(), Boolean(assist.onCreateVariable)).map(
+          (c): Completion => {
+            const { create, ...completion } = c;
+            if (!create) return completion;
+            return {
+              ...completion,
+              apply: (view, _completion, from, to) => {
+                assist.onCreateVariable?.(create);
+                view.dispatch({
+                  changes: { from, to, insert: `${create.domain}!${create.name}` },
+                });
+              },
+            };
+          },
+        )
+      : [];
+    // No validFor: the "Create …" entry depends on the exact token text, so
+    // the source must re-run per keystroke rather than re-filter cached options.
+    return { from: word.from, options: [...FUNCTION_COMPLETIONS, ...vars] };
+  }
+  // selectOnOpen:false keeps Enter passive until the user explicitly ArrowDowns
+  // into the list — mirroring the Guided inputs' `active = -1` contract, so a
+  // bare Enter never accepts a highlighted "Create …" row and declares a junk
+  // variable while the user is typing toward one they already have.
+  return [
+    autocompletion({ override: [completeSail], selectOnOpen: false }),
+    keymap.of(completionKeymap),
+  ];
 }

@@ -41,7 +41,7 @@ export function Button({
 /** Shared field-surface classes, so the TextInput primitive and the custom
  * VariableCombobox input stay pixel-identical. */
 export const inputBase =
-  'w-full border border-border-strong bg-surface px-2.5 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70';
+  'w-full border border-border-strong bg-surface px-2.5 py-1.5 text-sm outline-none placeholder:text-muted-foreground';
 
 export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(inputBase, className)} {...props} />;
@@ -51,7 +51,7 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   return (
     <textarea
       className={cn(
-        'w-full border border-border-strong bg-surface px-2.5 py-1.5 font-mono text-sm outline-none placeholder:text-muted-foreground/70',
+        'w-full border border-border-strong bg-surface px-2.5 py-1.5 font-mono text-sm outline-none placeholder:text-muted-foreground',
         className,
       )}
       {...props}
@@ -107,7 +107,7 @@ export function Field({
         {required && <span className="text-destructive"> *</span>}
       </span>
       {children}
-      {help && <span className="text-[11px] text-muted-foreground/80">{help}</span>}
+      {help && <span className="text-[11px] text-muted-foreground">{help}</span>}
     </Wrapper>
   );
 }

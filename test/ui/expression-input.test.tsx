@@ -78,6 +78,18 @@ describe('ExpressionInput variable assist', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
+  it('does not auto-open an empty menu for a non-declarable ! token (a!/fn!/fv!)', () => {
+    // Expression slots are dominated by a! functions; opening an empty "Create
+    // ri!/local!" panel on every such token would be pure noise. Only ri!/local!
+    // (which can match or be created) auto-open.
+    openIfElse();
+    const cond = screen.getByRole('combobox', { name: /Condition/ });
+    for (const fn of ['a!forEach', 'fn!sum', 'fv!item']) {
+      fireEvent.change(cond, { target: { value: fn } });
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    }
+  });
+
   it('opens on ArrowDown and dismisses on Escape', () => {
     useStore.getState().addVariable({ domain: 'ri', name: 'status', type: 'Text' });
     openIfElse();

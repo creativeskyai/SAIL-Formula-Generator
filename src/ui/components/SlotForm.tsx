@@ -58,6 +58,12 @@ interface SlotInputProps {
   variables: DeclaredVariable[];
   required?: boolean;
   onCreateVariable?: (v: DeclaredVariable) => void;
+  /** The field's label, threaded down so list rows can name themselves. */
+  label?: string;
+  /** Accessible name for this control when no wrapping <label> supplies one —
+   * i.e. list rows, whose Field renders as a caption-only group <div>. Left
+   * undefined for top-level slots, which are already named by their <label>. */
+  ariaLabel?: string;
 }
 
 function SlotInput({
@@ -68,6 +74,8 @@ function SlotInput({
   variables,
   required,
   onCreateVariable,
+  label,
+  ariaLabel,
 }: SlotInputProps) {
   switch (slot.type) {
     case 'text':
@@ -77,6 +85,7 @@ function SlotInput({
         <TextInput
           value={(value as string) ?? ''}
           placeholder={placeholder}
+          aria-label={ariaLabel}
           className={slot.type !== 'text' ? 'font-mono' : undefined}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -88,6 +97,7 @@ function SlotInput({
           // it as empty rather than crashing (matching the variableRef case).
           value={typeof value === 'string' ? value : ''}
           placeholder={placeholder}
+          ariaLabel={ariaLabel}
           variables={variables}
           onCreateVariable={onCreateVariable}
           onChange={(v) => onChange(v)}
@@ -102,6 +112,7 @@ function SlotInput({
           // case uses above).
           value={typeof value === 'string' ? value : ''}
           placeholder={placeholder}
+          ariaLabel={ariaLabel}
           variables={variables}
           domains={slot.domains}
           onCreateVariable={onCreateVariable}
@@ -114,6 +125,7 @@ function SlotInput({
           type="number"
           value={value === undefined || value === null ? '' : String(value)}
           placeholder={placeholder}
+          aria-label={ariaLabel}
           onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
         />
       );
@@ -121,6 +133,7 @@ function SlotInput({
       return (
         <Checkbox
           checked={Boolean(value)}
+          aria-label={ariaLabel}
           onChange={(e) => onChange(e.target.checked)}
         />
       );
@@ -128,6 +141,7 @@ function SlotInput({
       return (
         <Select
           value={(value as string) ?? ''}
+          aria-label={ariaLabel}
           onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)}
         >
           {/* An optional enum can be cleared back to "no value". */}
@@ -154,6 +168,10 @@ function SlotInput({
                   value={item}
                   placeholder={placeholder}
                   variables={variables}
+                  // Name each row so a screen reader announces "Choice Values
+                  // item 2" rather than an anonymous combobox — the group Field
+                  // renders as a caption-only <div>, so nothing else names it.
+                  ariaLabel={`${label ?? ariaLabel ?? 'Item'} item ${i + 1}`}
                   onCreateVariable={onCreateVariable}
                   onChange={(nv) => {
                     const next = items.slice();
@@ -239,6 +257,10 @@ export function SlotForm({
             placeholder={s.placeholder}
             variables={variables}
             required={s.required}
+            // Seed the label so list rows can build "<label> item N" names.
+            // Top-level inputs get no ariaLabel — their wrapping <label> already
+            // names them (overriding it with aria-label would be redundant).
+            label={s.label}
             onCreateVariable={onCreateVariable}
             onChange={(v) => onChange({ ...values, [s.id]: v })}
           />
