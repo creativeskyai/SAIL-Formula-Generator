@@ -39,7 +39,7 @@ export function VariablesMode() {
         <p className="text-sm text-muted-foreground">
           Declare <code>ri!</code> (rule inputs) and <code>local!</code> variables. They feed the
           Guided-mode field suggestions and resolve the validator&apos;s unresolved-reference check.
-          You can also create them inline from any variable field in Guided mode.
+          You can also create them inline from any reference or expression field in Guided mode.
         </p>
       </div>
 

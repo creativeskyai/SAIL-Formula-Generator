@@ -11,6 +11,7 @@ import type { DeclaredVariable } from '@/core/types';
 import { getRecipe } from '@/templates';
 import { Button, Checkbox, Field, Select, TextInput } from './primitives';
 import { VariableCombobox } from './VariableCombobox';
+import { ExpressionInput } from './ExpressionInput';
 
 /** Seed a values object with each slot's default (and enum first-option), so
  * forms show sensible starting values rather than blanks. */
@@ -70,7 +71,6 @@ function SlotInput({
 }: SlotInputProps) {
   switch (slot.type) {
     case 'text':
-    case 'expression':
     case 'recordTypeRef':
     case 'fieldRef':
       return (
@@ -79,6 +79,18 @@ function SlotInput({
           placeholder={placeholder}
           className={slot.type !== 'text' ? 'font-mono' : undefined}
           onChange={(e) => onChange(e.target.value)}
+        />
+      );
+    case 'expression':
+      return (
+        <ExpressionInput
+          // Tolerate a non-string value from a stale/hand-edited preset: render
+          // it as empty rather than crashing (matching the variableRef case).
+          value={typeof value === 'string' ? value : ''}
+          placeholder={placeholder}
+          variables={variables}
+          onCreateVariable={onCreateVariable}
+          onChange={(v) => onChange(v)}
         />
       );
     case 'variableRef':
