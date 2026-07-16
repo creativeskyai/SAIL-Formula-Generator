@@ -183,7 +183,10 @@ function SlotInput({
               <Button
                 type="button"
                 variant="ghost"
-                aria-label="Remove item"
+                // Name each row's delete button uniquely ("Remove Filters item
+                // 2"), mirroring the row input's name — identical "Remove item"
+                // names would leave AT users guessing which row dies.
+                aria-label={`Remove ${label ?? ariaLabel ?? 'item'} item ${i + 1}`}
                 onClick={() => onChange(items.filter((_, idx) => idx !== i))}
               >
                 <X className="h-4 w-4" />

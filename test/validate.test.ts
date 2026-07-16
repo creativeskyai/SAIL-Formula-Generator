@@ -107,23 +107,28 @@ describe('string-aware bracket balance (amendment 4b)', () => {
 });
 
 describe('unresolved variable references with fv! scoping (amendment 6)', () => {
-  it('undeclared ri! is an error', () => {
+  // Unresolved ri!/local! are WARNINGS (non-blocking, with a declare fix), the
+  // same treatment the reference gets in Compose mode — the reference is valid
+  // SAIL and may exist in the target Appian object.
+  it('undeclared ri! is a warning with a declare fix', () => {
     const d = validate(ref('ri', 'caseId'), catalog, NO_VARS);
-    expect(errs(d)).toHaveLength(1);
-    expect(errs(d)[0].message).toContain('ri!caseId');
+    expect(errs(d)).toHaveLength(0);
+    expect(warns(d)).toHaveLength(1);
+    expect(warns(d)[0].message).toContain('ri!caseId');
+    expect(warns(d)[0].fix).toEqual({ kind: 'declareVariable', domain: 'ri', name: 'caseId' });
   });
-  it('undeclared local! is an error', () => {
-    expect(errs(validate(ref('local', 'x'), catalog, NO_VARS))).toHaveLength(1);
+  it('undeclared local! is a warning', () => {
+    expect(warns(validate(ref('local', 'x'), catalog, NO_VARS))).toHaveLength(1);
   });
   it('declared ri! resolves', () => {
     const vars: DeclaredVariable[] = [{ domain: 'ri', name: 'caseId', type: 'Integer' }];
-    expect(errs(validate(ref('ri', 'caseId'), catalog, vars))).toHaveLength(0);
+    expect(validate(ref('ri', 'caseId'), catalog, vars)).toHaveLength(0);
   });
   it('fv! is never unresolved (implicitly scoped in a!forEach)', () => {
-    expect(errs(validate(ref('fv', 'item'), catalog, NO_VARS))).toHaveLength(0);
+    expect(validate(ref('fv', 'item'), catalog, NO_VARS)).toHaveLength(0);
   });
   it('environment domains (pv!, cons!) are not checked', () => {
-    expect(errs(validate(ref('cons', 'MY_CONST'), catalog, NO_VARS))).toHaveLength(0);
+    expect(validate(ref('cons', 'MY_CONST'), catalog, NO_VARS)).toHaveLength(0);
   });
 });
 

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
+import { useMemo, useRef, useState } from 'react';
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { catalog, type FunctionSpec } from '@/core/catalog';
 import type { VarDomain } from '@/core/ast';
 import { useStore } from '../store';
 import { analyzeCompose, buildSkeleton } from '../lib/compose';
+import { copyText, type CopyStatus } from '../lib/clipboard';
 import { sail, sailAutocomplete, type VariableAssist } from '../sail-language';
 import { Button, TextInput } from '../components/primitives';
 import { CREATED_TYPE } from '../components/variableMenu';
@@ -19,7 +20,14 @@ const ASSIST: VariableAssist = {
 };
 
 // Stable identities so CodeMirror doesn't reconfigure on every keystroke.
-const EXTENSIONS = [sail(), sailAutocomplete(ASSIST), EditorView.lineWrapping];
+// contentAttributes names the editor's textbox for assistive tech — CodeMirror
+// supplies role="textbox" but no accessible name of its own.
+const EXTENSIONS = [
+  sail(),
+  sailAutocomplete(ASSIST),
+  EditorView.lineWrapping,
+  EditorView.contentAttributes.of({ 'aria-label': 'SAIL expression editor' }),
+];
 // Autocompletion comes from the SAIL source above, so disable basicSetup's
 // built-in (source-less) one — otherwise two completion configs coexist.
 const BASIC_SETUP = { lineNumbers: true, foldGutter: false, autocompletion: false } as const;
@@ -31,7 +39,8 @@ export function ComposeMode() {
   const addVariable = useStore((s) => s.addVariable);
   const theme = useStore((s) => s.theme);
   const [query, setQuery] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -53,18 +62,30 @@ export function ComposeMode() {
 
   const insert = (spec: FunctionSpec) => {
     const snippet = buildSkeleton(spec);
-    setComposeText(composeText ? `${composeText}\n\n${snippet}` : snippet);
+    const view = editorRef.current?.view;
+    if (view) {
+      // Insert at the caret (replacing any selection), as "click to insert"
+      // promises — not appended at the end of the document. The dispatch fires
+      // onChange, which syncs the store.
+      const { from, to } = view.state.selection.main;
+      view.dispatch({
+        changes: { from, to, insert: snippet },
+        selection: { anchor: from + snippet.length },
+        scrollIntoView: true,
+      });
+      view.focus();
+    } else {
+      setComposeText(composeText ? `${composeText}\n\n${snippet}` : snippet);
+    }
   };
 
   const copy = async () => {
-    if (!composeText || !navigator.clipboard) return;
-    try {
-      await navigator.clipboard.writeText(composeText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* clipboard write denied (permissions / non-secure context) — no-op */
-    }
+    if (!composeText) return;
+    const ok = await copyText(composeText);
+    // Success and failure both get visible + announced feedback — a copy that
+    // silently did nothing is worse than an error message.
+    setCopyStatus(ok ? 'copied' : 'failed');
+    setTimeout(() => setCopyStatus('idle'), ok ? 1500 : 4000);
   };
 
   return (
@@ -72,6 +93,7 @@ export function ComposeMode() {
       <div className="flex flex-col gap-2 lg:overflow-hidden lg:border-r lg:border-border lg:pr-3">
         <TextInput
           placeholder="Search functions…"
+          aria-label="Search functions"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -104,10 +126,10 @@ export function ComposeMode() {
       <div className="flex flex-col gap-2 lg:min-h-0">
         <div className="flex items-start justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            Click a function to insert its skeleton, or start typing for autocomplete — functions,
-            your declared variables, and inline &ldquo;Create ri!name&rdquo; entries all appear.
-            Validation here checks bracket balance, known function names, and unresolved variables;
-            use Guided mode for fully-validated output.
+            Click a function to insert its skeleton at the cursor, or start typing for autocomplete
+            — functions, your declared variables, and inline &ldquo;Create ri!name&rdquo; entries
+            all appear. Validation here checks bracket balance, known function names, and unresolved
+            variables; Guided mode additionally checks each parameter against the catalog.
           </p>
           <div className="flex shrink-0 items-center gap-2">
             <Button
@@ -123,17 +145,23 @@ export function ComposeMode() {
               type="button"
               onClick={copy}
               disabled={!composeText}
+              className={copyStatus === 'failed' ? 'bg-destructive' : undefined}
               title="Copy the expression to the clipboard"
             >
-              {copied ? 'Copied' : 'Copy'}
+              {copyStatus === 'idle' ? 'Copy' : copyStatus === 'copied' ? 'Copied' : 'Copy failed'}
             </Button>
           </div>
         </div>
         <span className="sr-only" role="status" aria-live="polite">
-          {copied ? 'Copied to clipboard' : ''}
+          {copyStatus === 'copied'
+            ? 'Copied to clipboard'
+            : copyStatus === 'failed'
+              ? 'Copy failed — select the expression and copy manually'
+              : ''}
         </span>
         <div className="min-h-[300px] overflow-auto border border-border text-sm lg:min-h-0 lg:flex-1">
           <CodeMirror
+            ref={editorRef}
             value={composeText}
             theme={theme}
             extensions={EXTENSIONS}

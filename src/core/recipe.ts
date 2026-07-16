@@ -10,6 +10,7 @@
 import { z } from 'zod';
 import type { SailNode, VarDomain } from './ast';
 import type { DeclaredVariable } from './types';
+import { hasTopLevelComma } from './validate';
 
 export type SlotType =
   | { type: 'text' | 'boolean' }
@@ -49,15 +50,18 @@ export interface Recipe {
 // --- zod derivation ----------------------------------------------------------
 
 // Reference-shape validators. A variable reference is `domain!name` with
-// optional dotted/indexed accessors; a record/field reference starts with
-// `recordType!` and contains no whitespace. Both reject the malformed refs the
-// audit found (e.g. `ri!my case`, `ri!1id`, a bare `Case`).
+// optional dotted/indexed accessors. A record/field reference starts with
+// `recordType!` and may contain interior spaces — real UUID-qualified
+// references copied from an Appian environment look like
+// `recordType!{608f...}PSFS Case.fields.{...}status`, and record type names
+// routinely contain spaces. Both still reject the malformed refs the audit
+// found (e.g. `ri!my case`, `ri!1id`, a bare `Case`).
 const IDENT = String.raw`[A-Za-z_]\w*`;
 const ACCESSOR = String.raw`(?:\.${IDENT}|\[[^\]]*\])`;
 const VAR_REF_RE = new RegExp(
   `^(?:ri|local|pv|ac|cons|rule|fv|tp|rf|rp|pp)!${IDENT}${ACCESSOR}*$`,
 );
-const RECORD_REF_RE = /^recordType!\S+$/;
+const RECORD_REF_RE = /^recordType!\S(?:.*\S)?$/;
 
 function isValidRef(type: 'variableRef' | 'recordTypeRef' | 'fieldRef', value: string): boolean {
   const t = value.trim();
@@ -84,6 +88,14 @@ function slotToZod(slot: SlotType): z.ZodTypeAny {
         message: `must be one of: ${slot.options.join(', ')}`,
       });
     case 'expression':
+      // An expression slot holds exactly ONE expression. A comma at bracket
+      // depth 0 means the text would splice extra arguments into the call it's
+      // embedded in (`value: 1, 10`) — corrupt output that brackets-balance
+      // checking can't see.
+      return z.string().refine((v) => !hasTopLevelComma(v), {
+        message:
+          'looks like multiple expressions — wrap a list in { } or remove the extra comma',
+      });
     case 'recordTypeRef':
     case 'fieldRef':
     case 'variableRef':
@@ -101,19 +113,29 @@ export function slotsToZodSchema(slots: SlotSpec[]): z.ZodObject<z.ZodRawShape> 
     let schema = slotToZod(s.slot);
     // A required text/expression/ref slot must have non-whitespace content — an
     // empty or all-spaces value would otherwise serialize to nothing (or a
-    // blank argument) and produce invalid SAIL.
-    if (schema instanceof z.ZodString) {
+    // blank argument) and produce invalid SAIL. Keyed off the slot type, not
+    // `instanceof z.ZodString`, because the expression schema is already a
+    // refined ZodEffects.
+    const t = s.slot.type;
+    if (
+      t === 'text' ||
+      t === 'expression' ||
+      t === 'variableRef' ||
+      t === 'recordTypeRef' ||
+      t === 'fieldRef'
+    ) {
+      let str = schema as z.ZodType<string>;
       if (s.required) {
-        schema = schema.refine((v) => v.trim().length > 0, {
+        str = str.refine((v) => v.trim().length > 0, {
           message: `${s.label} is required`,
         });
       }
-      const t = s.slot.type;
       if (t === 'variableRef' || t === 'recordTypeRef' || t === 'fieldRef') {
-        schema = schema.refine((v) => isValidRef(t, v), {
+        str = str.refine((v) => isValidRef(t, v), {
           message: `${s.label} must be a valid ${t === 'variableRef' ? 'variable' : 'record'} reference`,
         });
       }
+      schema = str;
     }
     if (s.default !== undefined) schema = schema.default(s.default as never);
     else if (!s.required) schema = schema.optional();

@@ -141,8 +141,8 @@
         { "name": "labelPosition", "type": "Text", "keywordOnly": true, "enumValues": ["ABOVE", "ADJACENT", "COLLAPSED", "JUSTIFIED"] },
         { "name": "instructions", "type": "Text", "keywordOnly": true },
         { "name": "placeholder", "type": "Text", "keywordOnly": true },
-        { "name": "choiceLabels", "type": "List", "keywordOnly": true },
-        { "name": "choiceValues", "type": "List", "keywordOnly": true },
+        { "name": "choiceLabels", "type": "List", "required": true, "keywordOnly": true },
+        { "name": "choiceValues", "type": "List", "required": true, "keywordOnly": true },
         { "name": "value", "type": "Any", "keywordOnly": true },
         { "name": "saveInto", "type": "Any", "keywordOnly": true },
         { "name": "required", "type": "Boolean", "keywordOnly": true },
@@ -159,8 +159,8 @@
       "params": [
         { "name": "label", "type": "Text", "keywordOnly": true },
         { "name": "instructions", "type": "Text", "keywordOnly": true },
-        { "name": "choiceLabels", "type": "List", "keywordOnly": true },
-        { "name": "choiceValues", "type": "List", "keywordOnly": true },
+        { "name": "choiceLabels", "type": "List", "required": true, "keywordOnly": true },
+        { "name": "choiceValues", "type": "List", "required": true, "keywordOnly": true },
         { "name": "value", "type": "Any", "keywordOnly": true },
         { "name": "saveInto", "type": "Any", "keywordOnly": true },
         { "name": "required", "type": "Boolean", "keywordOnly": true },
@@ -414,7 +414,7 @@
       "returns": "Any",
       "params": [
         { "name": "message", "type": "Text", "required": true, "keywordOnly": true },
-        { "name": "validateAfter", "type": "Text", "keywordOnly": true }
+        { "name": "validateAfter", "type": "Text", "keywordOnly": true, "enumValues": ["UNFOCUS", "SUBMIT"] }
       ]
     },
     {

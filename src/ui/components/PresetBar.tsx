@@ -1,11 +1,11 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Trash2 } from 'lucide-react';
 import {
   buildPreset,
   deletePreset,
   exportPresetFile,
   importPresetFile,
-  listPresetNames,
+  listPresets,
   loadPreset,
   savePreset,
 } from '../lib/presets';
@@ -24,15 +24,28 @@ export function PresetBar({
   const variables = useStore((s) => s.variables);
   const loadPresetState = useStore((s) => s.loadPresetState);
   const [name, setName] = useState('');
-  const [names, setNames] = useState<string[]>(() => listPresetNames());
+  const [presets, setPresets] = useState(() => listPresets());
   const [selected, setSelected] = useState('');
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // `selected` means "this preset is what the current form shows". When the
+  // user navigates to a different scenario the claim stops being true, so the
+  // picker resets — EXCEPT when the scenario change was caused by loading a
+  // cross-scenario preset, which is exactly the loaded state.
+  const appliedRecipeId = useRef<string | null>(null);
+  useEffect(() => {
+    if (recipeId !== appliedRecipeId.current) {
+      setSelected('');
+      setError(null);
+      appliedRecipeId.current = null;
+    }
+  }, [recipeId]);
+
   // Saving under an existing name overwrites it (savePreset does all[name] = …).
   // Surface that as a deliberate "Replace", never a silent clobber.
   const trimmedName = name.trim();
-  const isReplace = trimmedName !== '' && names.includes(trimmedName);
+  const isReplace = trimmedName !== '' && presets.some((p) => p.name === trimmedName);
 
   const save = () => {
     if (!trimmedName) return;
@@ -42,7 +55,7 @@ export function PresetBar({
     }
     setName('');
     setError(null);
-    setNames(listPresetNames());
+    setPresets(listPresets());
   };
 
   const apply = (preset: Preset): boolean => {
@@ -50,6 +63,7 @@ export function PresetBar({
       setError(`Preset references an unavailable recipe (${preset.recipeId}).`);
       return false;
     }
+    appliedRecipeId.current = preset.recipeId;
     loadPresetState(preset);
     setError(null);
     return true;
@@ -61,16 +75,18 @@ export function PresetBar({
     try {
       const preset = loadPreset(presetName);
       if (preset) {
-        apply(preset);
+        // A failed apply (unavailable recipe) must not leave the select
+        // claiming a load that never happened.
+        if (!apply(preset)) setSelected('');
       } else {
-        // Gone from storage (e.g. deleted in another tab) — don't leave the
-        // select claiming a load that never happened.
+        // Gone from storage (e.g. deleted in another tab).
         setError(`Preset "${presetName}" no longer exists.`);
         setSelected('');
-        setNames(listPresetNames());
+        setPresets(listPresets());
       }
     } catch {
       setError(`Preset "${presetName}" is invalid or from an older version.`);
+      setSelected('');
     }
   };
 
@@ -82,7 +98,7 @@ export function PresetBar({
     }
     setSelected('');
     setError(null);
-    setNames(listPresetNames());
+    setPresets(listPresets());
   };
 
   const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +118,7 @@ export function PresetBar({
         <TextInput
           className="w-32"
           placeholder="Preset name"
+          aria-label="Preset name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && save()}
@@ -119,7 +136,7 @@ export function PresetBar({
         >
           {isReplace ? 'Replace' : 'Save'}
         </Button>
-        {names.length > 0 && (
+        {presets.length > 0 && (
           <>
             <Select
               className="w-auto"
@@ -128,11 +145,16 @@ export function PresetBar({
               aria-label="Load preset"
             >
               <option value="">Load preset…</option>
-              {names.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
+              {presets.map((p) => {
+                // Show which scenario each preset belongs to — loading one from
+                // another scenario switches the whole form, so say so up front.
+                const scenario = p.recipeId ? getRecipe(p.recipeId)?.name : undefined;
+                return (
+                  <option key={p.name} value={p.name}>
+                    {scenario && p.recipeId !== recipeId ? `${p.name} — ${scenario}` : p.name}
+                  </option>
+                );
+              })}
             </Select>
             {selected && (
               <Button
@@ -172,11 +194,15 @@ export function PresetBar({
         />
       </div>
       {isReplace && !error && (
-        <span className="text-xs text-warning">
+        <span className="text-xs text-warning" role="status">
           A preset named &ldquo;{trimmedName}&rdquo; already exists — saving will replace it.
         </span>
       )}
-      {error && <span className="text-xs text-destructive">{error}</span>}
+      {error && (
+        <span className="text-xs text-destructive" role="alert">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

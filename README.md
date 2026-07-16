@@ -7,7 +7,7 @@
 [![CI](https://github.com/creativeskyai/SAIL-Formula-Generator/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/creativeskyai/SAIL-Formula-Generator/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Stack](https://img.shields.io/badge/React%2019%20·%20TypeScript%20·%20Vite%20·%20Tailwind%20v4-0e7490)](#stack)
-[![Tests](https://img.shields.io/badge/tests-205%20passing-3da638)](#testing--verification)
+[![Tests](https://img.shields.io/badge/tests-217%20passing-3da638)](#testing--verification)
 [![Runtime AI](https://img.shields.io/badge/AI%20at%20runtime-none-8b5cf6)](#why-it-works-without-ai)
 
 **[What it is](#what-it-is) · [Why no AI](#why-it-works-without-ai) · [The three modes](#the-three-modes) · [How it works](#how-it-works) · [Quickstart](#quickstart) · [Testing](#testing--verification) · [Scope](#scope--honesty)**
@@ -41,7 +41,7 @@ Because the target is structured and finite per function, a form-driven builder 
 | **Compose** | A searchable catalog browser inserts skeleton snippets into a free-text editor — with autocomplete over catalog functions **and your declared variables** (plus inline "Create ri!name" entries), one-click copy, and validation for bracket balance, unknown functions, and **unresolved variables** (each with a one-click "Declare"). | Catalog + string-aware analyzer |
 | **Variables** | Declare `ri!` / `local!` variables with types; edit a variable's type in place; an "in use" badge flags any still referenced by a form value or the Compose editor. They feed the Guided and Compose suggestions and resolve the validator's unresolved-reference check. | Validator scope |
 
-Cross-cutting: a **record-type reference** you paste once (or fill with a sample dummy UUID) that prefills the record-type slot — shown on the start screen and only on scenarios that actually use it; live preview on every change; compact/expanded formatting toggle; copy disabled on error diagnostics, with `Ctrl`/`Cmd`+`Enter` copying through the same on-screen confirmation as the button; a record-reference re-linking caveat near Copy; preset save/load/delete (localStorage + JSON file, schema-validated on import) that shows **Replace** and warns before overwriting a same-named preset; **session persistence** — the selected scenario, form values, variables, compose text, and formatting choice are stored in the browser and restored on reload; example placeholders and inline help on every form slot; **inline variable declaration everywhere you reference one** — single-reference and free-SAIL expression fields (conditions, values, loop bodies) autocomplete over your declared variables and offer one-click `ri!`/`local!` creation inserted at the caret, the Compose editor's autocomplete does the same, and unresolved references in either mode carry a one-click **Declare** button — so you never leave for the Variables tab; **accessibility** — WCAG AA text contrast in both themes, accessible names on every control (including individual list rows), an ARIA tabs/combobox/listbox contract, and live-region announcements; tooltips on the mode tabs and action buttons; SAIL syntax highlighting; and dark mode.
+Cross-cutting: a **record-type reference** you paste once (or fill with a sample dummy UUID) that prefills the record-type slot — shown on the start screen and only on scenarios that actually use it, and it keeps prefilling untouched slots even after you edit other fields; live preview on every change; compact/expanded formatting toggle; copy disabled on error diagnostics, with `Ctrl`/`Cmd`+`Enter` copying through the same on-screen confirmation as the button — and an explicit visible + announced failure message when the clipboard is unavailable, never a silent no-op; a record-reference re-linking caveat near Copy; preset save/load/delete (localStorage + JSON file, schema-validated on import) that shows **Replace** and warns before overwriting a same-named preset, labels each saved preset with the scenario it belongs to, and stops claiming a preset is loaded once the form no longer shows it; **session persistence** — the selected scenario, form values, variables, compose text, and formatting choice are stored in the browser and restored on reload; example placeholders and inline help on every form slot; **inline variable declaration everywhere you reference one** — single-reference and free-SAIL expression fields (conditions, values, loop bodies) autocomplete over your declared variables and offer one-click `ri!`/`local!` creation inserted at the caret, the Compose editor's autocomplete does the same, and unresolved references get the **same non-blocking warning with a one-click Declare button on every surface** (reference slots, expression fields, and the Compose editor) — so you never leave for the Variables tab; **accessibility** — WCAG AA text contrast in both themes (including composited muted panels), accessible names on every control (both CodeMirror editors, individual list rows, and per-row remove buttons included), an ARIA tabs/combobox/listbox contract, and live-region announcements for copy results and preset errors; tooltips on the mode tabs and action buttons; SAIL syntax highlighting; and dark mode.
 
 ## How it works
 
@@ -89,13 +89,17 @@ Key correctness choices (full rationale in [`PLAN.md`](PLAN.md) §0): SAIL escap
 
 ## Quickstart
 
+**Use it** — grab `sail-formula-generator-<version>.zip` from the [latest release](https://github.com/creativeskyai/SAIL-Formula-Generator/releases/latest), unzip, and serve the folder from any static file server (`npx serve .`, `python -m http.server`, nginx, S3, GitHub Pages…). The build uses relative asset paths, so it works from any subdirectory. No backend, no network calls.
+
+**Develop it**:
+
 ```bash
 npm install
 npm run dev            # start the app (Vite)
 npm test               # run the Vitest suite
 npm run typecheck      # tsc --noEmit (strict)
 npm run check:catalog  # validate catalog.data.json against its schema
-npm run build          # type-check + production build (static files)
+npm run build          # type-check + production build (static files in dist/)
 ```
 
 ## Testing & verification
@@ -106,6 +110,7 @@ The build is gated by CI (typecheck + catalog schema-check + tests + build) and 
 - **Recipe snapshot tests** — `(recipeId, slotValues)` → serialized SAIL; the committed snapshots are the spec.
 - **Validator unit tests** — one per diagnostic type.
 - **UI acceptance tests** — the full pick → fill → add-filter → valid-copyable-SAIL flow.
+- **Release-QA regression tests** — every confirmed finding from the final pre-release audit (comma-splice protection, spaced record references, prototype-safe preset storage, prefill persistence, preset-picker honesty) is pinned by a test.
 - **Empirical gate** — each seed recipe was paste-tested once against a real Appian editor and parses as valid SAIL. Snapshots prove output is *stable*; this proves Appian *accepts* it.
 
 ## Scope & honesty

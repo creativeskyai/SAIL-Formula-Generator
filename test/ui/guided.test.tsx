@@ -26,7 +26,7 @@ describe('Guided mode acceptance flow', () => {
     expect(screen.getByText('Retrieve records with optional filters, sort, and paging.')).toBeInTheDocument();
 
     // Required Record Type is empty -> a build issue is shown, copy is blocked.
-    expect(screen.getByText(/Fill required fields/i)).toBeInTheDocument();
+    expect(screen.getByText(/Fix these fields/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled();
 
     // Fill the record type.
@@ -54,7 +54,7 @@ describe('Guided mode acceptance flow', () => {
 
     // No errors remain -> copy is enabled.
     expect(screen.getByRole('button', { name: 'Copy' })).not.toBeDisabled();
-    expect(screen.queryByText(/Fill required fields/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Fix these fields/i)).not.toBeInTheDocument();
   });
 
   it('empty optional slots vanish from the output', () => {

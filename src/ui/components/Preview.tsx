@@ -2,10 +2,17 @@ import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { sail } from '../sail-language';
 import { useStore } from '../store';
+import type { CopyStatus } from '../lib/clipboard';
 import { Button } from './primitives';
 
 // Stable identities so CodeMirror doesn't reconfigure on every keystroke.
-const EXTENSIONS = [sail(), EditorView.lineWrapping];
+// contentAttributes names the editor's textbox for assistive tech — CodeMirror
+// supplies role="textbox" but no accessible name of its own.
+const EXTENSIONS = [
+  sail(),
+  EditorView.lineWrapping,
+  EditorView.contentAttributes.of({ 'aria-label': 'Generated SAIL output' }),
+];
 const BASIC_SETUP = {
   lineNumbers: true,
   foldGutter: false,
@@ -13,12 +20,24 @@ const BASIC_SETUP = {
   highlightActiveLineGutter: false,
 } as const;
 
+const COPY_LABEL: Record<CopyStatus, string> = {
+  idle: 'Copy',
+  copied: 'Copied',
+  failed: 'Copy failed',
+};
+
+const COPY_ANNOUNCEMENT: Record<CopyStatus, string> = {
+  idle: '',
+  copied: 'Copied to clipboard',
+  failed: 'Copy failed — select the output and copy manually',
+};
+
 export function Preview({
   code,
   expanded,
   onToggleExpanded,
   canCopy,
-  copied,
+  copyStatus,
   onCopy,
 }: {
   code: string;
@@ -27,7 +46,7 @@ export function Preview({
   canCopy: boolean;
   /** Copy state + handler are owned by the parent so the Ctrl+Enter shortcut
    * and the button share one confirmation path. */
-  copied: boolean;
+  copyStatus: CopyStatus;
   onCopy: () => void;
 }) {
   const theme = useStore((s) => s.theme);
@@ -55,15 +74,16 @@ export function Preview({
             type="button"
             onClick={onCopy}
             disabled={!canCopy || !code}
+            className={copyStatus === 'failed' ? 'bg-destructive' : undefined}
             title={canCopy ? 'Copy SAIL to clipboard (Ctrl+Enter)' : 'Resolve errors before copying'}
           >
-            {copied ? 'Copied' : 'Copy'}
+            {COPY_LABEL[copyStatus]}
           </Button>
         </div>
-        {/* Separate live region (not the button's accessible name) so the 1.5s
-         * revert to idle announces nothing — only the copy action itself does. */}
+        {/* Separate live region (not the button's accessible name) so the
+         * revert to idle announces nothing — only the copy outcome does. */}
         <span className="sr-only" role="status" aria-live="polite">
-          {copied ? 'Copied to clipboard' : ''}
+          {COPY_ANNOUNCEMENT[copyStatus]}
         </span>
       </div>
       <div className="overflow-hidden border border-border text-sm">
@@ -76,6 +96,11 @@ export function Preview({
           basicSetup={BASIC_SETUP}
         />
       </div>
+      {copyStatus === 'failed' && (
+        <p className="text-[11px] text-destructive" role="alert">
+          Copying to the clipboard failed — select the output above and copy it manually.
+        </p>
+      )}
       {hasRecordRef && (
         <p className="text-[11px] text-muted-foreground">
           Record references are UUID-qualified when copied from a real Appian environment —

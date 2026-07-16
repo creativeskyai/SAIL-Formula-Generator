@@ -17,7 +17,7 @@ export const requiredValidation: Recipe = {
     {
       id: 'validateAfter',
       label: 'Validate After',
-      slot: { type: 'enum', options: ['KEYSTROKE', 'UNFOCUS', 'SUBMIT', 'REFRESH'] },
+      slot: { type: 'enum', options: ['UNFOCUS', 'SUBMIT'] },
       help: 'When Appian evaluates the validation. Leave (none) for the default.',
     },
   ],

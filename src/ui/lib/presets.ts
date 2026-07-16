@@ -22,15 +22,35 @@ function readStore(): Record<string, unknown> {
   try {
     const raw = localStorage.getItem(LS_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+    // Rebase onto a null-prototype object so preset names that collide with
+    // Object.prototype keys ("__proto__", "constructor") behave as plain data
+    // — a normal object would silently drop `all["__proto__"] = …`.
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? Object.assign(Object.create(null) as Record<string, unknown>, parsed)
+      : (Object.create(null) as Record<string, unknown>);
   } catch {
-    return {};
+    return Object.create(null) as Record<string, unknown>;
   }
 }
 
 /** Names of presets saved in localStorage, alphabetical. */
 export function listPresetNames(): string[] {
   return Object.keys(readStore()).sort();
+}
+
+/** Saved presets with the recipe each belongs to, alphabetical by name — so
+ * pickers can show which scenario a preset will switch the form to. */
+export function listPresets(): { name: string; recipeId: string | null }[] {
+  const all = readStore();
+  return Object.keys(all)
+    .sort()
+    .map((name) => {
+      const raw = all[name] as { recipeId?: unknown } | null;
+      return {
+        name,
+        recipeId: raw && typeof raw.recipeId === 'string' ? raw.recipeId : null,
+      };
+    });
 }
 
 /** Returns false if the write fails (storage unavailable, quota exceeded,

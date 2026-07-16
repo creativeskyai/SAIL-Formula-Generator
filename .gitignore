@@ -8,3 +8,12 @@ coverage
 *.log
 scratch*
 _probe*
+
+# AI-assistant tooling (local dev only, not part of the app)
+.claude/
+CLAUDE.md
+FABLE-RUN.md
+
+# Release artifacts
+release/
+*.zip

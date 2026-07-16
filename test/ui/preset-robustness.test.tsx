@@ -36,7 +36,7 @@ describe('preset robustness (review findings 1 & 2)', () => {
     render(<App />);
     expect(screen.getByText('SAIL Formula Generator')).toBeInTheDocument();
     // The generate-time zod check surfaces the mismatch instead of white-screening.
-    expect(screen.getByText(/Fill required fields/i)).toBeInTheDocument();
+    expect(screen.getByText(/Fix these fields/i)).toBeInTheDocument();
     expect(screen.getByText(/Expected array/i)).toBeInTheDocument();
   });
 

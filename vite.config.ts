@@ -5,6 +5,9 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 
 export default defineConfig({
+  // Relative base so the static build works from any path (subdirectory,
+  // GitHub Pages, or a plain file server) — the app is fully client-side.
+  base: './',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

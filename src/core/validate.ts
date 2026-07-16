@@ -66,6 +66,73 @@ export function isRawTextBalanced(text: string): boolean {
   return stack.length === 0;
 }
 
+/** Blank out string literals and block comments so scanning ignores their
+ * contents (brackets, commas, and variable-like text inside strings must not
+ * count). Shared by the raw-expression checks here and Compose's analyzer. */
+export function stripLiteralsAndComments(text: string): string {
+  let out = '';
+  let i = 0;
+  while (i < text.length) {
+    const c = text[i];
+    if (c === '/' && text[i + 1] === '*') {
+      out += '  ';
+      i += 2;
+      while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) {
+        out += ' ';
+        i++;
+      }
+      if (i < text.length) {
+        out += '  ';
+        i += 2;
+      }
+      continue;
+    }
+    if (c === '"') {
+      out += ' ';
+      i++;
+      while (i < text.length) {
+        if (text[i] === '"') {
+          if (text[i + 1] === '"') {
+            out += '  ';
+            i += 2;
+            continue;
+          }
+          out += ' ';
+          i++;
+          break;
+        }
+        out += ' ';
+        i++;
+      }
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
+/** True when raw SAIL text contains a comma at bracket depth 0 — i.e. the text
+ * is really several expressions, which would splice extra arguments into the
+ * call it's embedded in (`value: 1, 10`). String/comment contents are ignored. */
+export function hasTopLevelComma(text: string): boolean {
+  const stripped = stripLiteralsAndComments(text);
+  let depth = 0;
+  for (const c of stripped) {
+    if (c === '(' || c === '[' || c === '{') depth++;
+    else if (c === ')' || c === ']' || c === '}') depth--;
+    else if (c === ',' && depth <= 0) return true;
+  }
+  return false;
+}
+
+/** `ri!`/`local!` references in free SAIL text. Mirrors the variableRef slot
+ * grammar; used to check raw expressions the same way Compose mode does. */
+export const RAW_VAR_REF = /(?<![\w!])(ri|local)!([A-Za-z_]\w*)/g;
+/** `local!name:` is keyword-assignment position inside a!localVariables — that
+ * IS the declaration, so such names must not be flagged as unresolved. */
+export const RAW_LOCAL_DECL = /(?<![\w!])local!([A-Za-z_]\w*)\s*:/g;
+
 function asArray<T>(v: T | T[]): T[] {
   return Array.isArray(v) ? v : [v];
 }
@@ -94,11 +161,16 @@ export function validate(
   const diagnostics: Diagnostic[] = [];
   const declared = new Set(variables.map((v) => `${v.domain}!${v.name}`));
 
+  // Unresolved ri!/local! references are warnings, not errors: the reference
+  // is syntactically valid SAIL and may exist in the target Appian object even
+  // when it isn't declared here. Warning severity (with a one-click Declare
+  // fix) matches Compose mode, so the same reference gets the same treatment
+  // on every surface.
   function checkVar(node: VariableRef, path: (string | number)[]): void {
     if (node.domain === 'ri' || node.domain === 'local') {
       if (!declared.has(`${node.domain}!${node.name}`)) {
         diagnostics.push({
-          severity: 'error',
+          severity: 'warning',
           message: `Unresolved variable ${node.domain}!${node.name} — declare it in the Variables manager.`,
           path,
           fix: { kind: 'declareVariable', domain: node.domain, name: node.name },
@@ -107,6 +179,28 @@ export function validate(
     }
     // fv! is implicitly scoped (valid inside a!forEach and similar); other
     // domains are environment-provided. Neither is checked here.
+  }
+
+  /** Scan a raw expression's text for undeclared ri!/local! references, the
+   * same way Compose mode does — so an expression slot gets the same
+   * unresolved-variable warning (and one-click Declare fix) as a variableRef
+   * slot or the Compose editor. */
+  function checkRawVars(text: string, path: (string | number)[]): void {
+    const stripped = stripLiteralsAndComments(text);
+    const localDecls = new Set<string>();
+    for (const m of stripped.matchAll(RAW_LOCAL_DECL)) localDecls.add(`local!${m[1]}`);
+    const seen = new Set<string>();
+    for (const m of stripped.matchAll(RAW_VAR_REF)) {
+      const ref = `${m[1]}!${m[2]}`;
+      if (declared.has(ref) || localDecls.has(ref) || seen.has(ref)) continue;
+      seen.add(ref);
+      diagnostics.push({
+        severity: 'warning',
+        message: `Unresolved variable ${ref} — declare it in the Variables manager.`,
+        path,
+        fix: { kind: 'declareVariable', domain: m[1] as VariableRef['domain'], name: m[2] },
+      });
+    }
   }
 
   function checkCall(node: FunctionCall, path: (string | number)[]): void {
@@ -247,6 +341,7 @@ export function validate(
             path,
           });
         }
+        checkRawVars(node.text, path);
         break;
       case 'lit':
         break;

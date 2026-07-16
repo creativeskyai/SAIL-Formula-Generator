@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getRecipe, recipesByCategory } from '@/templates';
 import { computePreview } from '../lib/preview';
+import { copyText, type CopyStatus } from '../lib/clipboard';
 import { configFor, SAMPLE_RECORD_TYPE_REF, useStore } from '../store';
 import { SlotForm, initialValues } from '../components/SlotForm';
 import { Preview } from '../components/Preview';
@@ -42,6 +43,24 @@ export function GuidedMode() {
     [recipe, values, variables, expanded],
   );
 
+  // Persist only the slots that differ from their defaults. Storing the whole
+  // merged object would snapshot the record-type prefill on the first edit of
+  // ANY field, silently freezing the bar's live prefill for that scenario
+  // (stale/dummy UUIDs baked into the output). An untouched slot keeps
+  // following its default — including the record-type bar.
+  const storeValues = useCallback(
+    (v: Record<string, unknown>) => {
+      if (!recipe) return;
+      const defaults = initialValues(recipe.slots, recordTypeRef);
+      const overlay: Record<string, unknown> = {};
+      for (const [k, val] of Object.entries(v)) {
+        if (JSON.stringify(val) !== JSON.stringify(defaults[k])) overlay[k] = val;
+      }
+      setValues(recipe.id, overlay);
+    },
+    [recipe, recordTypeRef, setValues],
+  );
+
   const hasError = preview
     ? Boolean(preview.buildIssues?.length) || preview.diagnostics.some((d) => d.severity === 'error')
     : true;
@@ -54,18 +73,15 @@ export function GuidedMode() {
     !recipe || recipe.slots.some((s) => s.slot.type === 'recordTypeRef');
 
   const sail = preview?.sail ?? '';
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
   const copy = useCallback(() => {
-    if (hasError || !sail || !navigator.clipboard) return;
-    navigator.clipboard
-      .writeText(sail)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      })
-      .catch(() => {
-        /* clipboard write denied (permissions / non-secure context) — no-op */
-      });
+    if (hasError || !sail) return;
+    void copyText(sail).then((ok) => {
+      // Success and failure both get visible + announced feedback — a copy
+      // that silently did nothing is worse than an error message.
+      setCopyStatus(ok ? 'copied' : 'failed');
+      setTimeout(() => setCopyStatus('idle'), ok ? 1500 : 4000);
+    });
   }, [sail, hasError]);
 
   // Cmd/Ctrl+Enter copies through the exact same path as the Copy button, so the
@@ -83,8 +99,14 @@ export function GuidedMode() {
     <div className="flex min-h-full flex-col gap-3 lg:h-full">
       {showRecordTypeBar && (
         <div className="flex flex-wrap items-center gap-2 border border-border bg-muted px-3 py-2">
-          <span className="text-xs font-medium text-muted-foreground">Record type reference</span>
+          <label
+            htmlFor="record-type-ref"
+            className="text-xs font-medium text-muted-foreground"
+          >
+            Record type reference
+          </label>
           <TextInput
+            id="record-type-ref"
             className="min-w-[240px] flex-1 font-mono"
             placeholder="recordType!{uuid}Case — paste your environment's copied reference"
             value={recordTypeRef}
@@ -151,7 +173,7 @@ export function GuidedMode() {
               values={values}
               variables={variables}
               onCreateVariable={addVariable}
-              onChange={(v) => setValues(recipe.id, v)}
+              onChange={storeValues}
             />
           </div>
         ) : (
@@ -179,7 +201,7 @@ export function GuidedMode() {
               expanded={expanded}
               onToggleExpanded={() => setExpanded(!expanded)}
               canCopy={!hasError}
-              copied={copied}
+              copyStatus={copyStatus}
               onCopy={copy}
             />
             <Diagnostics

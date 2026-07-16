@@ -1,7 +1,8 @@
 {
   "name": "sail-formula-generator",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,13 +16,10 @@
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
     "@codemirror/language": "^6.10.8",
-    "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.36.4",
     "@fontsource/geist-mono": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
-    "@lezer/highlight": "^1.2.1",
     "@uiw/react-codemirror": "^4.23.10",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "react": "^19.0.0",

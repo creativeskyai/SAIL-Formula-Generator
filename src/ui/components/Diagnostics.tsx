@@ -29,7 +29,9 @@ export function Diagnostics({
   if (buildIssues && buildIssues.length > 0) {
     return (
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted-foreground">Fill required fields</span>
+        {/* Build issues include more than missing required fields (invalid
+          * references, multi-expression values), so the heading stays generic. */}
+        <span className="text-xs font-medium text-muted-foreground">Fix these fields</span>
         <ul className="flex flex-col gap-1 text-xs">
           {buildIssues.map((issue, i) => (
             <li key={i} className="text-warning">
