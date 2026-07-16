@@ -64,6 +64,10 @@ interface SlotInputProps {
    * i.e. list rows, whose Field renders as a caption-only group <div>. Left
    * undefined for top-level slots, which are already named by their <label>. */
   ariaLabel?: string;
+  /** The slot's declared default. A cleared number input falls back to this in
+   * the generated SAIL (zod applies defaults to undefined values), so the form
+   * says so instead of showing an empty box over a non-empty output. */
+  defaultValue?: unknown;
 }
 
 function SlotInput({
@@ -76,6 +80,7 @@ function SlotInput({
   onCreateVariable,
   label,
   ariaLabel,
+  defaultValue,
 }: SlotInputProps) {
   switch (slot.type) {
     case 'text':
@@ -124,7 +129,7 @@ function SlotInput({
         <TextInput
           type="number"
           value={value === undefined || value === null ? '' : String(value)}
-          placeholder={placeholder}
+          placeholder={defaultValue !== undefined ? `using default: ${defaultValue}` : placeholder}
           aria-label={ariaLabel}
           onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
         />
@@ -267,6 +272,7 @@ export function SlotForm({
             // Top-level inputs get no ariaLabel — their wrapping <label> already
             // names them (overriding it with aria-label would be redundant).
             label={s.label}
+            defaultValue={s.default}
             onCreateVariable={onCreateVariable}
             onChange={(v) => onChange({ ...values, [s.id]: v })}
           />

@@ -104,6 +104,17 @@ describe('first-run tour', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('a dismissing backdrop press is default-prevented so focus restore survives', () => {
+    // Regression (real-browser finding): without preventDefault, the native
+    // mousedown focus change lands on <body> AFTER the unmount effect restores
+    // focus to the opener, wiping the restoration.
+    render(<App />);
+    const backdrop = dialog().parentElement!;
+    // fireEvent returns false when a handler called preventDefault.
+    expect(fireEvent.mouseDown(backdrop, { button: 0 })).toBe(false);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('Tab routes focus into the button ring when focus starts on the panel itself', () => {
     render(<App />);
     const d = dialog();

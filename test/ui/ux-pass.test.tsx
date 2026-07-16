@@ -113,6 +113,35 @@ describe('Ctrl+Enter copy shares the button confirmation path', () => {
   });
 });
 
+describe('Cleared defaulted number fields say what the output will use', () => {
+  it('Batch Size shows "using default: 100" as placeholder when cleared', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Query a Record Type' }));
+
+    const batch = screen.getByRole('spinbutton', { name: /Batch Size/i });
+    // Seeded with the default — no placeholder needed while a value shows.
+    expect(batch).toHaveValue(100);
+
+    // Clearing the field: the generated SAIL keeps batchSize: 100 (zod applies
+    // the default to undefined), so the empty box must say so.
+    fireEvent.change(batch, { target: { value: '' } });
+    expect(batch).toHaveValue(null);
+    expect(batch).toHaveAttribute('placeholder', 'using default: 100');
+  });
+});
+
+describe('Tab panel role lives on an inner div, not <main> (ARIA landmark guard)', () => {
+  it('keeps the main landmark and exposes a separate tabpanel', () => {
+    render(<App />);
+    const main = document.querySelector('main')!;
+    // Overriding main's landmark role would leave the page without one, and
+    // ARIA disallows tabpanel on <main> in the first place.
+    expect(main).not.toHaveAttribute('role');
+    const panel = screen.getByRole('tabpanel');
+    expect(main.contains(panel)).toBe(true);
+  });
+});
+
 describe('Instructional text avoids low-contrast opacity (WCAG 1.4.3 regression guard)', () => {
   it('Field help text uses full-opacity muted-foreground', () => {
     render(

@@ -170,7 +170,12 @@ export function WelcomeTour({ onClose }: { onClose: () => void }) {
       // fires the click event on this common ancestor and must not close the
       // tour, and a right-click (context menu) must not dismiss either.
       onMouseDown={(e) => {
-        if (e.button === 0 && e.target === e.currentTarget) onClose();
+        if (e.button === 0 && e.target === e.currentTarget) {
+          // Without this, the browser's native mousedown focus change lands on
+          // <body> AFTER the unmount effect restores focus to the opener.
+          e.preventDefault();
+          onClose();
+        }
       }}
     >
       <div
