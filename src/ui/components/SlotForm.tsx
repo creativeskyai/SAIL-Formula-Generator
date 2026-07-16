@@ -197,6 +197,9 @@ function SlotInput({
             <Button
               type="button"
               variant="outline"
+              // Name the button per list ("Add Filters item") — a form can hold
+              // several lists, and identical "+ Add" names are ambiguous.
+              aria-label={`Add ${label ?? ariaLabel ?? 'list'} item`}
               onClick={() => onChange([...items, defaultForSlot(slot.item)])}
             >
               + Add

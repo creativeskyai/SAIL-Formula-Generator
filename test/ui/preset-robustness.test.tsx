@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import App from '@/ui/App';
+import { markTourSeen } from '@/ui/components/WelcomeTour';
 import { useStore } from '@/ui/store';
 import { ErrorBoundary } from '@/ui/components/ErrorBoundary';
 
@@ -20,6 +21,7 @@ function resetStore(overrides: Partial<ReturnType<typeof useStore.getState>> = {
 beforeEach(() => {
   cleanup();
   localStorage.clear();
+  markTourSeen(); // these tests model a returning user - the tour stays closed
   resetStore();
 });
 

@@ -152,7 +152,15 @@ export function VariablesMode() {
                       </option>
                     ))}
                   </Select>
-                  <Button type="button" variant="ghost" onClick={() => removeVariable(i)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    // Name each row's button uniquely — nine identical "Remove"
+                    // names would leave AT users guessing which variable dies.
+                    aria-label={`Remove ${v.domain}!${v.name}`}
+                    title={`Remove ${v.domain}!${v.name} from the declared variables`}
+                    onClick={() => removeVariable(i)}
+                  >
                     Remove
                   </Button>
                 </span>

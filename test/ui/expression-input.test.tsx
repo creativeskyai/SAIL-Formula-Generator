@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import App from '@/ui/App';
+import { markTourSeen } from '@/ui/components/WelcomeTour';
 import { useStore } from '@/ui/store';
 
 beforeEach(() => {
   cleanup();
+  markTourSeen(); // these tests model a returning user - the tour stays closed
   useStore.setState({
     mode: 'guided',
     selectedRecipeId: null,

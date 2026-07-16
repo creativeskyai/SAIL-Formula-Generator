@@ -1,5 +1,5 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { CircleHelp, Moon, Sun } from 'lucide-react';
 import { catalog } from '@/core/catalog';
 import { Button } from './components/primitives';
 import { useStore, type Mode } from './store';
@@ -7,6 +7,7 @@ import { GuidedMode } from './modes/GuidedMode';
 import { ComposeMode } from './modes/ComposeMode';
 import { VariablesMode } from './modes/VariablesMode';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { WelcomeTour, isTourSeen, markTourSeen } from './components/WelcomeTour';
 
 const TABS: { id: Mode; label: string; title: string }[] = [
   { id: 'guided', label: 'Guided', title: 'Pick a scenario and fill a form — SAIL generates live' },
@@ -20,6 +21,13 @@ export default function App() {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   const tablistRef = useRef<HTMLElement>(null);
+  // First visit: open the tour automatically; afterwards it lives behind the
+  // Help button. Closing it (any path) records the dismissal.
+  const [tourOpen, setTourOpen] = useState(() => !isTourSeen());
+  const closeTour = () => {
+    markTourSeen();
+    setTourOpen(false);
+  };
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -44,10 +52,18 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground">
+    <>
+    {/* The app chrome goes inert while the tour dialog is up, so focus,
+      * clicks, and assistive tech all stay inside the dialog. */}
+    <div
+      className="flex h-screen flex-col bg-background text-foreground"
+      inert={tourOpen || undefined}
+    >
       <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-border px-6 py-3">
         <div>
-          <h1 className="text-base font-semibold">SAIL Formula Generator</h1>
+          <h1 className="text-base font-semibold">
+            <span aria-hidden="true">⛵ </span>SAIL Formula Generator
+          </h1>
           <p className="text-xs text-muted-foreground">
             Deterministic, offline Appian SAIL — no AI at runtime.
           </p>
@@ -81,6 +97,16 @@ export default function App() {
           <Button
             type="button"
             variant="outline"
+            onClick={() => setTourOpen(true)}
+            className="h-8 w-8 border-border px-0"
+            aria-label="Open the quick tour"
+            title="Quick tour — what each mode does"
+          >
+            <CircleHelp className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="h-8 w-8 border-border px-0"
             aria-label="Toggle dark mode"
@@ -110,5 +136,7 @@ export default function App() {
         validation only — verify record types &amp; fields in your app.
       </footer>
     </div>
+    {tourOpen && <WelcomeTour onClose={closeTour} />}
+    </>
   );
 }
