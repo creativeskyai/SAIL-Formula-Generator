@@ -14,9 +14,12 @@
  *  - A braces button opens the same menu on demand to browse/insert any declared
  *    variable, even from a bare or empty caret.
  *
- * A bare identifier (e.g. `sum`) does NOT auto-open the menu — it is just as
- * likely a function name, and popping "Create ri!sum" mid-formula would be
- * noise. The `!` is the unambiguous "I'm writing a variable reference" signal.
+ * The menu auto-opens only for a token that starts with a declarable domain
+ * prefix (`ri!` / `local!`) — the only references that can match a declared
+ * variable or be created here. A bare identifier (`sum`) or a non-declarable
+ * prefix (`a!`, `fn!`, `fv!`, `cons!`, `pv!`) does NOT auto-open: those are
+ * function calls or platform-supplied values, and popping an empty "Create…"
+ * panel over the field on the most common thing typed here would be pure noise.
  */
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
@@ -195,8 +198,11 @@ export function ExpressionInput({
           onChange(e.target.value);
           const t = tokenAt(e.target.value, e.target.selectionStart ?? e.target.value.length);
           setToken(t);
-          // Auto-open only for an unambiguous reference token (contains `!`).
-          setOpen(t.text.includes('!'));
+          // Auto-open only for a declarable-domain token (`ri!`/`local!`). Other
+          // `!`-tokens (a!, fn!, fv!, cons!, pv!) are functions or platform
+          // values that can neither match nor be created, so opening would show
+          // an empty panel over the field's primary input.
+          setOpen(/^(ri|local)!/.test(t.text));
           setActive(-1);
         }}
         onKeyDown={onKeyDown}

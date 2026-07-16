@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { SAIL_TYPES } from '@/core/catalog';
 import type { SailType, VarDomain } from '@/core/ast';
 import { useStore } from '../store';
@@ -36,13 +36,22 @@ export function VariablesMode() {
     setError(null);
   };
 
-  /** Best-effort "still referenced somewhere" check: the ref string appearing
-   * in any stored form value or the Compose text. Cheap and read-only — it
-   * flags a removal the user may regret, without blocking it. */
-  const inUse = (v: { domain: VarDomain; name: string }): boolean => {
-    const ref = `${v.domain}!${v.name}`;
-    return JSON.stringify(valuesByRecipe).includes(ref) || composeText.includes(ref);
-  };
+  /** Every `ri!`/`local!` reference that actually appears in a stored form value
+   * or the Compose text, extracted with the same token-boundary regex the
+   * Compose analyzer uses (compose.ts VAR_REF). Boundary-anchored so `ri!case`
+   * is not reported "in use" merely because `ri!caseId` is referenced. */
+  const referenced = useMemo(() => {
+    const VAR_REF = /(?<![\w!])(ri|local)!([A-Za-z_]\w*)/g;
+    const haystack = `${JSON.stringify(valuesByRecipe)}\n${composeText}`;
+    const refs = new Set<string>();
+    for (const m of haystack.matchAll(VAR_REF)) refs.add(`${m[1]}!${m[2]}`);
+    return refs;
+  }, [valuesByRecipe, composeText]);
+
+  /** Best-effort "still referenced somewhere" check — flags a removal the user
+   * may regret, without blocking it. */
+  const inUse = (v: { domain: VarDomain; name: string }): boolean =>
+    referenced.has(`${v.domain}!${v.name}`);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">

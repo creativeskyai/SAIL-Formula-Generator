@@ -27,6 +27,14 @@ describe('variableCompletions (Compose editor autocomplete)', () => {
     expect(opts.some((o) => o.create)).toBe(false);
   });
 
+  it('suppresses the create entry when the token is a prefix of an existing variable', () => {
+    // Typing `ri!ca` toward a declared `ri!caseId` must complete to it, not
+    // offer to create a junk `ri!ca` that CodeMirror would rank first.
+    const opts = variableCompletions('ri!ca', [{ domain: 'ri', name: 'caseId', type: 'Text' }], true);
+    expect(opts.some((o) => o.create)).toBe(false);
+    expect(opts.map((o) => o.label)).toContain('ri!caseId');
+  });
+
   it('offers no create entry for a non-declarable domain (pv!)', () => {
     expect(variableCompletions('pv!foo', [], true).some((o) => o.create)).toBe(false);
   });

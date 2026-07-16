@@ -111,8 +111,13 @@ export function VariableCombobox({
         }
         break;
       case 'ArrowUp':
-        e.preventDefault();
-        setActive((i) => Math.max(0, i - 1));
+        // Only when the menu is open — otherwise let the native input handle
+        // ArrowUp (caret to start), matching ExpressionInput and every other
+        // text field in the app.
+        if (open) {
+          e.preventDefault();
+          setActive((i) => Math.max(0, i - 1));
+        }
         break;
       case 'Enter':
         // Only act when the user has explicitly navigated into the list — a
@@ -158,7 +163,16 @@ export function VariableCombobox({
           setOpen(true);
           setActive(-1);
         }}
-        onClick={() => setOpen(true)}
+        // Reset the highlight when reopening by click, so a stale index left
+        // over from an earlier ArrowDown+Escape can't make the next Enter
+        // silently overwrite the typed reference. Restores the documented
+        // "-1 = passive on open" contract, matching ExpressionInput.openMenu.
+        onClick={() => {
+          if (!open) {
+            setOpen(true);
+            setActive(-1);
+          }
+        }}
         onKeyDown={onKeyDown}
       />
       <ChevronDown

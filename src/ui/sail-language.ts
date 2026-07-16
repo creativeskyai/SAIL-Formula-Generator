@@ -129,7 +129,12 @@ export function variableCompletions(
   if (
     !CREATABLE.includes(domain) ||
     !IDENT_RE.test(name) ||
-    variables.some((v) => v.domain === domain && v.name === name)
+    // Suppress the create row when the typed name is a prefix of (or equal to) an
+    // already-declared variable in this domain: the user is completing toward it,
+    // not creating a new one. Without this, `ri!ca` (with `ri!caseId` declared)
+    // would offer to create a junk `ri!ca`, and — being an exact-label match —
+    // CodeMirror would rank it above the prefix-matched existing variable.
+    variables.some((v) => v.domain === domain && v.name.startsWith(name))
   ) {
     return existing;
   }
@@ -178,5 +183,12 @@ export function sailAutocomplete(assist?: VariableAssist) {
     // the source must re-run per keystroke rather than re-filter cached options.
     return { from: word.from, options: [...FUNCTION_COMPLETIONS, ...vars] };
   }
-  return [autocompletion({ override: [completeSail] }), keymap.of(completionKeymap)];
+  // selectOnOpen:false keeps Enter passive until the user explicitly ArrowDowns
+  // into the list — mirroring the Guided inputs' `active = -1` contract, so a
+  // bare Enter never accepts a highlighted "Create …" row and declares a junk
+  // variable while the user is typing toward one they already have.
+  return [
+    autocompletion({ override: [completeSail], selectOnOpen: false }),
+    keymap.of(completionKeymap),
+  ];
 }

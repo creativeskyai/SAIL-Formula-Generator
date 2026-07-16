@@ -30,7 +30,10 @@
   --primary-foreground: oklch(1 0 0);
   /* Status — state only, never decorative. */
   --destructive: oklch(0.5766 0.19 29.18);
-  --warning: oklch(0.649 0.1428 67.59);
+  /* Darkened from L=0.649 so warning text clears WCAG AA (4.5:1) at the 11–12px
+   * sizes it's used at, against both --background and --surface; hue 67 (amber)
+   * stays clearly distinct from --destructive (hue 29, red). */
+  --warning: oklch(0.55 0.1428 67.59);
   --success: oklch(0.6148 0.1447 154.23);
   --info: oklch(0.5486 0 0);
 

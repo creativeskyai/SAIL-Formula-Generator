@@ -2,10 +2,12 @@ import { useMemo, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { catalog, type FunctionSpec } from '@/core/catalog';
+import type { VarDomain } from '@/core/ast';
 import { useStore } from '../store';
 import { analyzeCompose, buildSkeleton } from '../lib/compose';
 import { sail, sailAutocomplete, type VariableAssist } from '../sail-language';
 import { Button, TextInput } from '../components/primitives';
+import { CREATED_TYPE } from '../components/variableMenu';
 import { cn } from '@/lib/utils';
 
 // Read live variables and declare inline straight from the store singleton, so
@@ -26,6 +28,7 @@ export function ComposeMode() {
   const composeText = useStore((s) => s.composeText);
   const setComposeText = useStore((s) => s.setComposeText);
   const variables = useStore((s) => s.variables);
+  const addVariable = useStore((s) => s.addVariable);
   const theme = useStore((s) => s.theme);
   const [query, setQuery] = useState('');
   const [copied, setCopied] = useState(false);
@@ -153,10 +156,29 @@ export function ComposeMode() {
             </span>
           )}
           {analysis.unresolvedVariables.length > 0 && (
-            <span className="text-warning">
-              Unresolved variables: {analysis.unresolvedVariables.join(', ')} — declare them in the
-              Variables tab, or accept a &ldquo;Create&rdquo; suggestion as you type.
-            </span>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-warning">
+              <span>
+                Unresolved variables — declare them in one click (as {CREATED_TYPE}, adjustable on
+                the Variables tab):
+              </span>
+              {analysis.unresolvedVariables.map((ref) => {
+                const [domain, name] = ref.split('!');
+                return (
+                  <Button
+                    key={ref}
+                    type="button"
+                    variant="outline"
+                    className="px-1.5 py-0 text-[11px] font-normal"
+                    title={`Declare ${ref} (as ${CREATED_TYPE}) so this reference resolves`}
+                    onClick={() =>
+                      addVariable({ domain: domain as VarDomain, name, type: CREATED_TYPE })
+                    }
+                  >
+                    Declare {ref}
+                  </Button>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

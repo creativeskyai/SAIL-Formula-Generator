@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getRecipe, recipesByCategory } from '@/templates';
 import { computePreview } from '../lib/preview';
 import { configFor, SAMPLE_RECORD_TYPE_REF, useStore } from '../store';
@@ -46,46 +46,69 @@ export function GuidedMode() {
     ? Boolean(preview.buildIssues?.length) || preview.diagnostics.some((d) => d.severity === 'error')
     : true;
 
-  // Cmd/Ctrl+Enter copies the current output when it is valid.
+  // Show the record-type reference bar in the empty state and on scenarios that
+  // actually have a record-type slot to prefill; hide it on the other recipes,
+  // where pasting a reference would do nothing and only confuse. Keeping it in
+  // the empty state preserves the "paste once, then pick a scenario" flow.
+  const showRecordTypeBar =
+    !recipe || recipe.slots.some((s) => s.slot.type === 'recordTypeRef');
+
   const sail = preview?.sail ?? '';
+  const [copied, setCopied] = useState(false);
+  const copy = useCallback(() => {
+    if (hasError || !sail || !navigator.clipboard) return;
+    navigator.clipboard
+      .writeText(sail)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => {
+        /* clipboard write denied (permissions / non-secure context) — no-op */
+      });
+  }, [sail, hasError]);
+
+  // Cmd/Ctrl+Enter copies through the exact same path as the Copy button, so the
+  // shortcut the UI advertises gets the same "Copied" confirmation and live
+  // announcement instead of silently succeeding.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !hasError && sail && navigator.clipboard) {
-        navigator.clipboard.writeText(sail).catch(() => {});
-      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') copy();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [sail, hasError]);
+  }, [copy]);
 
   return (
     <div className="flex min-h-full flex-col gap-3 lg:h-full">
-      <div className="flex flex-wrap items-center gap-2 border border-border bg-muted px-3 py-2">
-        <span className="text-xs font-medium text-muted-foreground">Record type reference</span>
-        <TextInput
-          className="min-w-[240px] flex-1 font-mono"
-          placeholder="recordType!{uuid}Case — paste your environment's copied reference"
-          value={recordTypeRef}
-          onChange={(e) => setRecordTypeRef(e.target.value)}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setRecordTypeRef(SAMPLE_RECORD_TYPE_REF)}
-        >
-          Use sample
-        </Button>
-        {recordTypeRef && (
-          <Button type="button" variant="ghost" onClick={() => setRecordTypeRef('')}>
-            Clear
+      {showRecordTypeBar && (
+        <div className="flex flex-wrap items-center gap-2 border border-border bg-muted px-3 py-2">
+          <span className="text-xs font-medium text-muted-foreground">Record type reference</span>
+          <TextInput
+            className="min-w-[240px] flex-1 font-mono"
+            placeholder="recordType!{uuid}Case — paste your environment's copied reference"
+            value={recordTypeRef}
+            onChange={(e) => setRecordTypeRef(e.target.value)}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setRecordTypeRef(SAMPLE_RECORD_TYPE_REF)}
+          >
+            Use sample
           </Button>
-        )}
-        <p className="w-full text-[11px] text-muted-foreground/80">
-          Prefills the record-type slot when you pick a scenario. Field references carry their own
-          UUIDs, so edit those per field. &ldquo;Use sample&rdquo; inserts a dummy UUID so you can
-          test generation without a real environment.
-        </p>
-      </div>
+          {recordTypeRef && (
+            <Button type="button" variant="ghost" onClick={() => setRecordTypeRef('')}>
+              Clear
+            </Button>
+          )}
+          <p className="w-full text-[11px] text-muted-foreground">
+            Prefills the record-type slot when you pick a scenario. Field references carry their own
+            UUIDs, so edit those per field. &ldquo;Use sample&rdquo; inserts a dummy UUID so you can
+            test generation without a real environment.
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)]">
         <nav className="flex flex-col gap-3 lg:overflow-y-auto lg:border-r lg:border-border lg:pr-3">
         {Object.entries(groups).map(([category, list]) => (
@@ -156,6 +179,8 @@ export function GuidedMode() {
               expanded={expanded}
               onToggleExpanded={() => setExpanded(!expanded)}
               canCopy={!hasError}
+              copied={copied}
+              onCopy={copy}
             />
             <Diagnostics
               diagnostics={preview.diagnostics}

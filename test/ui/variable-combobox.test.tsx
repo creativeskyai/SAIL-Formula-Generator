@@ -129,6 +129,24 @@ describe('VariableCombobox in Guided mode', () => {
     expect(screen.getByRole('combobox', { name: 'Value' })).toHaveValue('');
   });
 
+  it('reopening by click after Escape starts passive, so Enter keeps the typed value', () => {
+    // Regression: previously a click reopened with the stale highlight from an
+    // earlier ArrowDown, so Enter clobbered the typed reference (and could
+    // declare a junk variable). Reopen must reset to the -1 passive state.
+    useStore.getState().addVariable({ domain: 'ri', name: 'caseId', type: 'Text' });
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Integer Field' }));
+    const value = screen.getByRole('combobox', { name: 'Value' });
+
+    fireEvent.change(value, { target: { value: 'ri!ca' } }); // opens, active = -1
+    fireEvent.keyDown(value, { key: 'ArrowDown' }); // highlight first option
+    fireEvent.keyDown(value, { key: 'Escape' }); // close (active left non-negative)
+    fireEvent.click(value); // reopen -> must reset to passive
+    fireEvent.keyDown(value, { key: 'Enter' }); // passive -> no selection
+
+    expect(useStore.getState().valuesByRecipe['integer-field'].value).toBe('ri!ca');
+  });
+
   it('dismisses the dropdown on Tab so it never orphans as a floating panel', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Integer Field' }));

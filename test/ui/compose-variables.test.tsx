@@ -29,6 +29,23 @@ describe('Compose mode', () => {
     expect(useStore.getState().composeText).toContain('startIndex:');
   });
 
+  it('declares an unresolved variable in one click and clears the warning', () => {
+    // Parity with Guided's diagnostic fix: Compose surfaces a Declare button for
+    // each unresolved ri!/local! reference, no trip to the Variables tab.
+    useStore.setState({ mode: 'compose', composeText: 'ri!missing + 1' });
+    render(<App />);
+
+    const declare = screen.getByRole('button', { name: /Declare ri!missing/i });
+    fireEvent.click(declare);
+
+    expect(useStore.getState().variables).toContainEqual({
+      domain: 'ri',
+      name: 'missing',
+      type: 'Text',
+    });
+    expect(screen.queryByRole('button', { name: /Declare ri!missing/i })).not.toBeInTheDocument();
+  });
+
   it('Copy and Clear are disabled when empty, enabled with text, and Clear empties the pane', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('tab', { name: 'Compose' }));
@@ -93,6 +110,21 @@ describe('Variables manager', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('tab', { name: 'Variables' }));
     expect(screen.getByText('in use')).toBeInTheDocument();
+  });
+
+  it('does not flag a variable "in use" when only a longer-named one is referenced', () => {
+    // ri!case must not match inside ri!caseId — token-boundary check, not substring.
+    useStore.setState({
+      variables: [
+        { domain: 'ri', name: 'case', type: 'Text' },
+        { domain: 'ri', name: 'caseId', type: 'Text' },
+      ],
+      valuesByRecipe: { 'text-field': { label: 'X', value: 'ri!caseId' } },
+    });
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Variables' }));
+    // Only ri!caseId is referenced -> exactly one badge, not two.
+    expect(screen.getAllByText('in use')).toHaveLength(1);
   });
 
   it('a declared variable resolves in the validator (no unresolved error)', () => {
