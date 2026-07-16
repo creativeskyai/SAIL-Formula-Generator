@@ -1,0 +1,19 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+coverage
+.vite
+*.log
+scratch*
+_probe*
+
+# AI-assistant tooling (local dev only, not part of the app)
+.claude/
+CLAUDE.md
+FABLE-RUN.md
+
+# Release artifacts
+release/
+*.zip

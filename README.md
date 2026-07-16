@@ -1,0 +1,128 @@
+<div align="center">
+
+# SAIL Formula Generator
+
+**Generate valid Appian SAIL expressions from guided forms and composable templates — with zero AI at runtime.**
+
+[![CI](https://github.com/creativeskyai/SAIL-Formula-Generator/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/creativeskyai/SAIL-Formula-Generator/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![Stack](https://img.shields.io/badge/React%2019%20·%20TypeScript%20·%20Vite%20·%20Tailwind%20v4-0e7490)](#stack)
+[![Tests](https://img.shields.io/badge/tests-217%20passing-3da638)](#testing--verification)
+[![Runtime AI](https://img.shields.io/badge/AI%20at%20runtime-none-8b5cf6)](#why-it-works-without-ai)
+
+**[What it is](#what-it-is) · [Why no AI](#why-it-works-without-ai) · [The three modes](#the-three-modes) · [How it works](#how-it-works) · [Quickstart](#quickstart) · [Testing](#testing--verification) · [Scope](#scope--honesty)**
+
+</div>
+
+---
+
+## What it is
+
+A standalone, fully deterministic, offline, client-only web app that turns a scenario choice plus filled-in slots into correct, well-formatted SAIL. **Same inputs → byte-identical output, always.** No backend, no network calls, deployable as static files anywhere.
+
+> [!NOTE]
+> All the "intelligence" lives in three data/logic layers — a function **catalog**, a **recipe** (template) library, and a **composition engine** — not in a model. The tool guarantees *syntactic* well-formedness and catalog conformance; it does not infer novel logic at runtime.
+
+## Why it works without AI
+
+SAIL is a functional language: every construct — components, layouts, queries, logic — is a documented function call with a known parameter list, types, and defaults (`a!textField(label:, value:, saveInto:, ...)`). There is no imperative control flow to infer. The language maps cleanly onto three things a compiler front-end already knows how to handle:
+
+- an **AST** (function calls, literals, arrays, maps, variable refs, operators),
+- a **catalog** (each function = a schema of typed params), and
+- a **serializer** (AST → formatted SAIL string).
+
+Because the target is structured and finite per function, a form-driven builder plus template composition covers the real workflow space deterministically. This is a compiler problem, not an ML problem.
+
+## The three modes
+
+| Mode | What you do | Backed by |
+|------|-------------|-----------|
+| **Guided** | Pick a scenario, fill a dynamic form, watch valid formatted SAIL generate live with deterministic validation, then copy or export. Nested and list slots render as add/remove sub-forms; reference and expression fields declare variables inline; and an unresolved-reference diagnostic offers a one-click "Declare" button. | Recipes + serializer + validator |
+| **Compose** | A searchable catalog browser inserts skeleton snippets into a free-text editor — with autocomplete over catalog functions **and your declared variables** (plus inline "Create ri!name" entries), one-click copy, and validation for bracket balance, unknown functions, and **unresolved variables** (each with a one-click "Declare"). | Catalog + string-aware analyzer |
+| **Variables** | Declare `ri!` / `local!` variables with types; edit a variable's type in place; an "in use" badge flags any still referenced by a form value or the Compose editor. They feed the Guided and Compose suggestions and resolve the validator's unresolved-reference check. | Validator scope |
+
+Cross-cutting: a **record-type reference** you paste once (or fill with a sample dummy UUID) that prefills the record-type slot — shown on the start screen and only on scenarios that actually use it, and it keeps prefilling untouched slots even after you edit other fields; live preview on every change; compact/expanded formatting toggle; copy disabled on error diagnostics, with `Ctrl`/`Cmd`+`Enter` copying through the same on-screen confirmation as the button — and an explicit visible + announced failure message when the clipboard is unavailable, never a silent no-op; a record-reference re-linking caveat near Copy; preset save/load/delete (localStorage + JSON file, schema-validated on import) that shows **Replace** and warns before overwriting a same-named preset, labels each saved preset with the scenario it belongs to, and stops claiming a preset is loaded once the form no longer shows it; **session persistence** — the selected scenario, form values, variables, compose text, and formatting choice are stored in the browser and restored on reload; example placeholders and inline help on every form slot; **inline variable declaration everywhere you reference one** — single-reference and free-SAIL expression fields (conditions, values, loop bodies) autocomplete over your declared variables and offer one-click `ri!`/`local!` creation inserted at the caret, the Compose editor's autocomplete does the same, and unresolved references get the **same non-blocking warning with a one-click Declare button on every surface** (reference slots, expression fields, and the Compose editor) — so you never leave for the Variables tab; **accessibility** — WCAG AA text contrast in both themes (including composited muted panels), accessible names on every control (both CodeMirror editors, individual list rows, and per-row remove buttons included), an ARIA tabs/combobox/listbox contract, and live-region announcements for copy results and preset errors; tooltips on the mode tabs and action buttons; SAIL syntax highlighting; and dark mode.
+
+## How it works
+
+The deterministic engine (`src/core/` + `src/templates/`) has **zero UI dependencies**, so it's independently testable and reusable. The UI is a thin React shell on top.
+
+```mermaid
+flowchart TD
+    UI["<b>8 · UI</b> — Guided · Compose · Variables · live preview · diagnostics"]
+    REG["<b>7 · Scenario registry</b> — groups recipes by workflow category"]
+    REC["<b>6 · Recipe library</b> — templates with zod-validated slots + build()"]
+    VAL["<b>5 · Validator</b> — structural + catalog-driven diagnostics"]
+    SER["<b>4 · Serializer</b> — AST → formatted SAIL (deterministic)"]
+    BLD["<b>3 · Builder API</b> — pure AST constructors, null-arg pruning"]
+    AST["<b>2 · AST + type system</b> — node types, SAIL type enum"]
+    CAT["<b>1 · Catalog</b> — 74 typed FunctionSpecs"]
+
+    UI --> REG --> REC
+    REC --> SER
+    REC --> VAL
+    SER --> BLD --> AST
+    VAL --> CAT
+    AST --> CAT
+
+    subgraph engine ["Deterministic engine — no React"]
+        REC
+        VAL
+        SER
+        BLD
+        AST
+        CAT
+    end
+```
+
+| # | Layer | Module |
+|---|-------|--------|
+| 1 | Catalog | `src/core/catalog.ts` · `catalog.data.json` |
+| 2 | AST + types | `src/core/ast.ts` · `types.ts` |
+| 3 | Builder | `src/core/builder.ts` |
+| 4 | Serializer | `src/core/serialize.ts` |
+| 5 | Validator | `src/core/validate.ts` |
+| 6 | Recipes | `src/core/recipe.ts` · `src/templates/` |
+| 7 · 8 | Registry + UI | `src/templates/index.ts` · `src/ui/` |
+
+Key correctness choices (full rationale in [`PLAN.md`](PLAN.md) §0): SAIL escapes embedded quotes by **doubling** them (no backslashes); `and` / `or` / `not` are **function calls**, not operators; the serializer emits **no trailing commas** and breaks lines greedily at a max width; `RawExpr` operands are always parenthesized; record references get their own AST node because they need re-linking in a real Appian environment.
+
+## Quickstart
+
+**Use it** — grab `sail-formula-generator-<version>.zip` from the [latest release](https://github.com/creativeskyai/SAIL-Formula-Generator/releases/latest), unzip, and serve the folder from any static file server (`npx serve .`, `python -m http.server`, nginx, S3, GitHub Pages…). The build uses relative asset paths, so it works from any subdirectory. No backend, no network calls.
+
+**Develop it**:
+
+```bash
+npm install
+npm run dev            # start the app (Vite)
+npm test               # run the Vitest suite
+npm run typecheck      # tsc --noEmit (strict)
+npm run check:catalog  # validate catalog.data.json against its schema
+npm run build          # type-check + production build (static files in dist/)
+```
+
+## Testing & verification
+
+The build is gated by CI (typecheck + catalog schema-check + tests + build) and was assembled through repeated adversarial review — each engine layer's findings were attacked by independent skeptics before being fixed.
+
+- **Golden/serializer tests** — fixed AST → exact expected SAIL: escaping, precedence, line-break boundaries, arrays, maps, refs.
+- **Recipe snapshot tests** — `(recipeId, slotValues)` → serialized SAIL; the committed snapshots are the spec.
+- **Validator unit tests** — one per diagnostic type.
+- **UI acceptance tests** — the full pick → fill → add-filter → valid-copyable-SAIL flow.
+- **Release-QA regression tests** — every confirmed finding from the final pre-release audit (comma-splice protection, spaced record references, prototype-safe preset storage, prefill persistence, preset-picker honesty) is pinned by a test.
+- **Empirical gate** — each seed recipe was paste-tested once against a real Appian editor and parses as valid SAIL. Snapshots prove output is *stable*; this proves Appian *accepts* it.
+
+## Scope & honesty
+
+- **Syntactic, not semantic.** Well-formed, catalog-conformant SAIL only — it cannot verify a given app's record types, fields, or security. Record references usually need re-linking in Appian.
+- **Coverage is finite by construction.** Templates cover the common cases; Compose mode covers the rest but demands SAIL knowledge.
+- **Loose typing.** Type checks are advisory warnings, never guarantees.
+
+## Stack
+
+Vite · React 19 · TypeScript (strict) · Tailwind v4 · Zustand · CodeMirror 6 · Zod · Vitest · Lucide icons · Space Grotesk / Geist Mono (self-hosted via `@fontsource`, no CDN). Client-only, static build, fully offline.
+
+## License
+
+[Apache 2.0](LICENSE).

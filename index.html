@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SAIL Formula Generator</title>
+    <meta
+      name="description"
+      content="Generate valid Appian SAIL expressions from guided forms and composable templates — deterministic, offline, no AI at runtime."
+    />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131313" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E2%9B%B5%3C/text%3E%3C/svg%3E"
+    />
+    <script>
+      // Apply the persisted theme before first paint so dark-mode users never
+      // see a flash of the light theme. Mirrors readTheme() in src/ui/store.ts.
+      try {
+        var t = localStorage.getItem('sailgen.theme');
+        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
