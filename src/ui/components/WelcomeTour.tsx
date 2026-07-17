@@ -164,7 +164,7 @@ export function WelcomeTour({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="tour-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       // Dismiss on a LEFT press that STARTS on the backdrop — a click that
       // starts inside the panel (e.g. selecting text) and releases out here
       // fires the click event on this common ancestor and must not close the
@@ -185,7 +185,7 @@ export function WelcomeTour({ onClose }: { onClose: () => void }) {
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className="flex w-full max-w-md flex-col gap-3 border border-border bg-background p-5 text-foreground outline-none"
+        className="tour-panel flex w-full max-w-md flex-col gap-3 border border-border bg-background p-5 text-foreground outline-none"
       >
         <div className="flex items-baseline justify-between gap-3">
           <h2 id={titleId} className="text-base font-semibold">

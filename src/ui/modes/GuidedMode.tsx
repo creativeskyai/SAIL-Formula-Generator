@@ -89,6 +89,9 @@ export function GuidedMode() {
   // announcement instead of silently succeeding.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // The app behind an open modal is inert, but window listeners still
+      // fire — copying from behind the tour would be invisible to the user.
+      if (document.querySelector('[role="dialog"]')) return;
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') copy();
     };
     window.addEventListener('keydown', onKey);

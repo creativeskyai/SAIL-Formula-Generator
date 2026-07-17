@@ -99,6 +99,20 @@ describe('Ctrl+Enter copy shares the button confirmation path', () => {
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
 
+  it('does nothing while the tour dialog is open — the app behind is inert', () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    useStore.setState({ mode: 'compose', composeText: 'if(true, 1, 2)' });
+    render(<App />);
+    // Reopen the tour (beforeEach marks it seen, so it won't auto-open).
+    fireEvent.click(screen.getByRole('button', { name: 'Open the quick tour' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    fireEvent.keyDown(document.body, { key: 'Enter', ctrlKey: true });
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
   it('works in Compose mode too — the tour advertises the shortcut for both', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText } });

@@ -141,6 +141,28 @@ h4 {
   outline-offset: -3px;
 }
 
+/* Tour entrance: a quick backdrop fade and panel rise. Gated on
+ * prefers-reduced-motion so motion-sensitive users get an instant dialog. */
+@media (prefers-reduced-motion: no-preference) {
+  .tour-backdrop {
+    animation: tour-fade 120ms ease-out;
+  }
+  .tour-panel {
+    animation: tour-rise 160ms ease-out;
+  }
+  @keyframes tour-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes tour-rise {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+}
+
 /* Native select popups follow the theme even where color-scheme alone does
  * not restyle the option list (Windows). */
 select option {

@@ -93,6 +93,9 @@ export function ComposeMode() {
   // binding (insert blank line) when focus is inside the editor.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // The app behind an open modal is inert, but window listeners still
+      // fire — copying from behind the tour would be invisible to the user.
+      if (document.querySelector('[role="dialog"]')) return;
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
