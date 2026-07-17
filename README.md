@@ -36,7 +36,8 @@ Everywhere you work:
 - **Live preview and diagnostics** on every change, with one-click fixes — an unresolved `ri!`/`local!` reference offers a **Declare** button on every surface instead of making you switch tabs.
 - **Paste your record-type reference once** and it prefills every scenario that uses one.
 - **Presets** (saved locally, plus JSON export/import) and **session persistence** — reload and pick up where you left off.
-- **Accessible by design** — full keyboard support, WCAG AA contrast in light and dark themes, screen-reader announcements for copy and preset actions.
+- **A first-run tour** walks through the three modes once; reopen it anytime from the **?** button in the header. Copy the output anywhere with **Ctrl+Enter**.
+- **Accessible by design** — full keyboard support, visible focus indicators (including inside the editors), WCAG AA contrast in light and dark themes down to syntax-highlight tokens, screen-reader announcements for copy and preset actions, and motion that respects `prefers-reduced-motion`.
 
 ## How it works
 
@@ -46,28 +47,26 @@ The deterministic engine (`src/core/` + `src/templates/`) has **zero UI dependen
 flowchart TD
     UI["<b>8 · UI</b> — Guided · Compose · Variables · live preview · diagnostics"]
     REG["<b>7 · Scenario registry</b> — groups recipes by workflow category"]
-    REC["<b>6 · Recipe library</b> — templates with zod-validated slots + build()"]
-    VAL["<b>5 · Validator</b> — structural + catalog-driven diagnostics"]
-    SER["<b>4 · Serializer</b> — AST → formatted SAIL (deterministic)"]
-    BLD["<b>3 · Builder API</b> — pure AST constructors, null-arg pruning"]
-    AST["<b>2 · AST + type system</b> — node types, SAIL type enum"]
-    CAT["<b>1 · Catalog</b> — 74 typed FunctionSpecs"]
+
+    subgraph engine ["&nbsp;Deterministic engine — no React&nbsp;"]
+        direction TB
+        REC["<b>6 · Recipe library</b> — templates with zod-validated slots + build()"]
+        VAL["<b>5 · Validator</b> — structural + catalog-driven diagnostics"]
+        SER["<b>4 · Serializer</b> — AST → formatted SAIL (deterministic)"]
+        BLD["<b>3 · Builder API</b> — pure AST constructors, null-arg pruning"]
+        AST["<b>2 · AST + type system</b> — node types, SAIL type enum"]
+        CAT["<b>1 · Catalog</b> — 74 typed FunctionSpecs"]
+
+        REC --> SER
+        REC --> VAL
+        SER --> BLD --> AST
+        VAL --> CAT
+        AST --> CAT
+    end
 
     UI --> REG --> REC
-    REC --> SER
-    REC --> VAL
-    SER --> BLD --> AST
-    VAL --> CAT
-    AST --> CAT
 
-    subgraph engine ["Deterministic engine — no React"]
-        REC
-        VAL
-        SER
-        BLD
-        AST
-        CAT
-    end
+    style engine fill:transparent,stroke:#8888,stroke-width:1.5px,stroke-dasharray:6 4
 ```
 
 | # | Layer | Module |
@@ -92,6 +91,8 @@ npm test         # run the test suite
 ```
 
 The production build is plain static files with relative paths — serve `dist/` from any file server, subdirectory, or CDN (`npx serve dist`, nginx, S3, GitHub Pages…). No backend, no network calls.
+
+Don't want to build? Grab the prebuilt static bundle from the [latest release](https://github.com/creativeskyai/SAIL-Formula-Generator/releases/latest) and serve the unzipped folder the same way.
 
 ## Limits
 
