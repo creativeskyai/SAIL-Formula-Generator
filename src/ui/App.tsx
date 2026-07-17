@@ -9,10 +9,10 @@ import { VariablesMode } from './modes/VariablesMode';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { WelcomeTour, isTourSeen, markTourSeen } from './components/WelcomeTour';
 
-const TABS: { id: Mode; label: string; title: string }[] = [
-  { id: 'guided', label: 'Guided', title: 'Pick a scenario and fill a form — SAIL generates live' },
-  { id: 'compose', label: 'Compose', title: 'Free-form editor with a searchable function catalog' },
-  { id: 'variables', label: 'Variables', title: 'Declare ri! and local! variables for suggestions and validation' },
+const TABS: { id: Mode; label: string; tip: string }[] = [
+  { id: 'guided', label: 'Guided', tip: 'Pick a scenario and fill a form — SAIL generates live' },
+  { id: 'compose', label: 'Compose', tip: 'Free-form editor with a searchable function catalog' },
+  { id: 'variables', label: 'Variables', tip: 'Declare ri! and local! variables for suggestions and validation' },
 ];
 
 export default function App() {
@@ -32,6 +32,23 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
+
+  // WCAG 1.4.13: Escape dismisses any visible tooltip without moving hover or
+  // focus (index.css hides .tip under this class); moving either re-enables.
+  useEffect(() => {
+    const dismiss = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') document.documentElement.classList.add('tips-dismissed');
+    };
+    const restore = () => document.documentElement.classList.remove('tips-dismissed');
+    window.addEventListener('keydown', dismiss);
+    window.addEventListener('mouseover', restore);
+    window.addEventListener('focusin', restore);
+    return () => {
+      window.removeEventListener('keydown', dismiss);
+      window.removeEventListener('mouseover', restore);
+      window.removeEventListener('focusin', restore);
+    };
+  }, []);
 
   // ARIA tabs keyboard contract: roving tabindex, Left/Right/Home/End move
   // both focus and the active panel (selection follows focus).
@@ -85,7 +102,7 @@ export default function App() {
                 aria-selected={mode === t.id}
                 aria-controls={`panel-${t.id}`}
                 tabIndex={mode === t.id ? 0 : -1}
-                title={t.title}
+                tip={t.tip}
                 onClick={() => setMode(t.id)}
                 onKeyDown={onTabKeyDown}
                 className="px-3 py-1 text-sm"
@@ -100,7 +117,8 @@ export default function App() {
             onClick={() => setTourOpen(true)}
             className="h-8 w-8 border-border px-0"
             aria-label="Open the quick tour"
-            title="Quick tour — what each mode does"
+            tip="Quick tour — what each mode does"
+            tipAlign="end"
           >
             <CircleHelp className="h-4 w-4" />
           </Button>
@@ -110,7 +128,8 @@ export default function App() {
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="h-8 w-8 border-border px-0"
             aria-label="Toggle dark mode"
-            title="Toggle dark mode"
+            tip="Toggle dark mode"
+            tipAlign="end"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>

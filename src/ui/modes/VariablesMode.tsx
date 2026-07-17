@@ -2,7 +2,7 @@ import { useId, useMemo, useState } from 'react';
 import { SAIL_TYPES } from '@/core/catalog';
 import type { SailType, VarDomain } from '@/core/ast';
 import { useStore } from '../store';
-import { Button, Field, Select, TextInput } from '../components/primitives';
+import { Button, Field, Select, TextInput, TipWrap } from '../components/primitives';
 
 const DECLARABLE_DOMAINS: VarDomain[] = ['ri', 'local'];
 
@@ -67,17 +67,19 @@ export function VariablesMode() {
 
       <div className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[110px_1fr_150px_auto]">
         <Field label="Domain">
-          <Select
-            value={domain}
-            title="ri! = rule input passed into the interface; local! = variable local to the expression"
-            onChange={(e) => setDomain(e.target.value as VarDomain)}
+          <TipWrap
+            tip="ri! = rule input passed into the interface; local! = variable local to the expression"
+            tipAlign="start"
+            className="w-full"
           >
-            {DECLARABLE_DOMAINS.map((d) => (
-              <option key={d} value={d}>
-                {d}!
-              </option>
-            ))}
-          </Select>
+            <Select value={domain} onChange={(e) => setDomain(e.target.value as VarDomain)}>
+              {DECLARABLE_DOMAINS.map((d) => (
+                <option key={d} value={d}>
+                  {d}!
+                </option>
+              ))}
+            </Select>
+          </TipWrap>
         </Field>
         <Field label="Name">
           <TextInput
@@ -130,35 +132,42 @@ export function VariablesMode() {
                     {v.domain}!{v.name}
                   </span>
                   {inUse(v) && (
-                    <span
-                      className="shrink-0 border border-border px-1.5 text-[10px] uppercase tracking-wide text-muted-foreground"
-                      title="Referenced by a form value or the Compose editor — removing it will leave unresolved references"
+                    <TipWrap
+                      tip="Referenced by a form value or the Compose editor — removing it will leave unresolved references"
+                      className="shrink-0"
                     >
-                      in use
-                    </span>
+                      <span className="border border-border px-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                        in use
+                      </span>
+                    </TipWrap>
                   )}
                 </span>
                 <span className="flex shrink-0 items-center gap-1">
-                  <Select
-                    className="w-auto py-0.5 text-xs"
-                    value={v.type ?? 'Text'}
-                    aria-label={`Type of ${v.domain}!${v.name}`}
-                    title="Change this variable's type in place — no need to remove and re-add"
-                    onChange={(e) => updateVariable(i, { type: e.target.value as SailType })}
+                  <TipWrap
+                    tip="Change this variable's type in place — no need to remove and re-add"
+                    tipAlign="end"
                   >
-                    {SAIL_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </Select>
+                    <Select
+                      className="w-auto py-0.5 text-xs"
+                      value={v.type ?? 'Text'}
+                      aria-label={`Type of ${v.domain}!${v.name}`}
+                      onChange={(e) => updateVariable(i, { type: e.target.value as SailType })}
+                    >
+                      {SAIL_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </Select>
+                  </TipWrap>
                   <Button
                     type="button"
                     variant="ghost"
                     // Name each row's button uniquely — nine identical "Remove"
                     // names would leave AT users guessing which variable dies.
                     aria-label={`Remove ${v.domain}!${v.name}`}
-                    title={`Remove ${v.domain}!${v.name} from the declared variables`}
+                    tip={`Remove ${v.domain}!${v.name} from the declared variables`}
+                    tipAlign="end"
                     onClick={() => removeVariable(i)}
                   >
                     Remove

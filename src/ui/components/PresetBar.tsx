@@ -128,7 +128,7 @@ export function PresetBar({
           type="button"
           onClick={save}
           disabled={!trimmedName}
-          title={
+          tip={
             isReplace
               ? `Replace the existing preset "${trimmedName}" with the current form values and variables`
               : 'Save the current form values and variables under this name (browser storage)'
@@ -162,7 +162,7 @@ export function PresetBar({
                 type="button"
                 onClick={remove}
                 aria-label={`Delete preset ${selected}`}
-                title={`Delete preset "${selected}"`}
+                tip={`Delete preset "${selected}"`}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -173,7 +173,7 @@ export function PresetBar({
           variant="outline"
           type="button"
           onClick={() => exportPresetFile(buildPreset(recipeId, values, variables), `${recipeId}.json`)}
-          title="Download the current form values and variables as a JSON file"
+          tip="Download the current form values and variables as a JSON file"
         >
           Export
         </Button>
@@ -181,7 +181,7 @@ export function PresetBar({
           variant="outline"
           type="button"
           onClick={() => fileRef.current?.click()}
-          title="Load form values and variables from an exported JSON file"
+          tip="Load form values and variables from an exported JSON file"
         >
           Import
         </Button>

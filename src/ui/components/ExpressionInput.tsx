@@ -26,7 +26,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Braces } from 'lucide-react';
 import type { VarDomain } from '@/core/ast';
 import type { DeclaredVariable } from '@/core/types';
-import { inputBase } from './primitives';
+import { inputBase, Tip } from './primitives';
 import { cn } from '@/lib/utils';
 import {
   comboItems,
@@ -210,13 +210,16 @@ export function ExpressionInput({
       <button
         type="button"
         aria-label="Insert variable"
-        title="Insert or create a variable"
+        aria-describedby={`${baseId}-tip`}
         // Keep focus in the input (no blur before the menu opens).
         onMouseDown={(e) => e.preventDefault()}
         onClick={openMenu}
-        className="absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
+        className="has-tip absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
       >
         <Braces className="h-4 w-4" />
+        <Tip id={`${baseId}-tip`} align="end">
+          Insert or create a variable
+        </Tip>
       </button>
       {open && rect && (
         <VariableOptions
