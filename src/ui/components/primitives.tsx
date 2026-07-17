@@ -2,6 +2,7 @@
  * hairline borders, flat surface fills, one global ink focus ring (index.css).
  */
 
+import { cloneElement, useId, type ReactElement } from 'react';
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -11,11 +12,71 @@ import type {
 } from 'react';
 import { cn } from '@/lib/utils';
 
+/** The tooltip bubble (styles in index.css). aria-hidden so its text never
+ * joins the host's accessible NAME (buttons/tabs flatten children into their
+ * name); the host's aria-describedby still computes a DESCRIPTION from it —
+ * the same slot the old native `title` filled. */
+export function Tip({ id, align = 'center', children }: TipProps & { id: string }) {
+  return (
+    <span
+      id={id}
+      role="tooltip"
+      aria-hidden="true"
+      className={cn('tip', align === 'end' && 'tip-end', align === 'start' && 'tip-start')}
+    >
+      {children}
+    </span>
+  );
+}
+
+interface TipProps {
+  /** Horizontal anchor: center under the control (default), or pinned to its
+   * start/end edge for controls near a viewport or container edge. */
+  align?: 'center' | 'start' | 'end';
+  children: ReactNode;
+}
+
+/** Tooltip host for controls that cannot contain children (`<select>`,
+ * `<input>`) or plain text badges: wraps the single child, clones it with
+ * aria-describedby, and shows the tip on hover / any focus-visible inside. */
+export function TipWrap({
+  tip,
+  tipAlign,
+  className,
+  children,
+}: {
+  tip: string;
+  tipAlign?: TipProps['align'];
+  className?: string;
+  children: ReactElement<{ 'aria-describedby'?: string }>;
+}) {
+  const tipId = useId();
+  return (
+    <span className={cn('has-tip relative inline-flex', className)}>
+      {cloneElement(children, { 'aria-describedby': tipId })}
+      <Tip id={tipId} align={tipAlign}>
+        {tip}
+      </Tip>
+    </span>
+  );
+}
+
 export function Button({
   className,
   variant = 'solid',
+  tip,
+  tipAlign,
+  children,
+  'aria-describedby': ariaDescribedBy,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'solid' | 'outline' | 'ghost' }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'solid' | 'outline' | 'ghost';
+  /** Tooltip text — replaces the native `title` (invisible to keyboard and
+   * touch users) with the CSS tooltip, wired as the accessible description. */
+  tip?: string;
+  tipAlign?: TipProps['align'];
+}) {
+  const tipId = useId();
   const styles = {
     solid: 'bg-primary text-primary-foreground hover:bg-primary-hover',
     outline: 'border border-border-strong hover:bg-muted',
@@ -25,16 +86,25 @@ export function Button({
     <button
       className={cn(
         // No disabled:pointer-events-none — a disabled button must still show
-        // its explanatory tooltip (e.g. Preview's "Resolve errors" title).
+        // its explanatory tooltip (e.g. Preview's "Resolve errors" tip).
         // Transition transform only, never a token-valued color property —
         // otherwise a light/dark toggle mid-hover animates through a stale
         // color instead of switching instantly.
         'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-transform duration-[120ms] ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100',
+        tip && 'has-tip relative',
         styles,
         className,
       )}
+      aria-describedby={cn(ariaDescribedBy, tip && tipId) || undefined}
       {...props}
-    />
+    >
+      {children}
+      {tip && (
+        <Tip id={tipId} align={tipAlign}>
+          {tip}
+        </Tip>
+      )}
+    </button>
   );
 }
 

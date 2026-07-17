@@ -25,7 +25,12 @@ describe('Guided mode acceptance flow', () => {
 
     // Pick the scenario.
     fireEvent.click(screen.getByRole('button', { name: 'Query a Record Type' }));
-    expect(screen.getByText('Retrieve records with optional filters, sort, and paging.')).toBeInTheDocument();
+    // ignore the scenario button's tooltip span, which repeats the description
+    expect(
+      screen.getByText('Retrieve records with optional filters, sort, and paging.', {
+        ignore: '.tip, script, style',
+      }),
+    ).toBeInTheDocument();
 
     // Required Record Type is empty -> a build issue is shown, copy is blocked.
     expect(screen.getByText(/Fix these fields/i)).toBeInTheDocument();

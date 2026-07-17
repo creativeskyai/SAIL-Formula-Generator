@@ -141,6 +141,76 @@ h4 {
   outline-offset: -3px;
 }
 
+/* --- Tooltips (CSS-only) ------------------------------------------------
+ * A .tip span inside a .has-tip host, shown on hover (native-like delay) and
+ * on keyboard focus — the two audiences native `title` abandons are keyboard
+ * and touch users; touch still gets the text via the accessible description.
+ * Opaque --surface fill (never translucent --muted: tips float over content).
+ * pointer-events: none keeps the tip from stealing the pointer, and because
+ * it renders inside the host, hovering "the tooltip" is hovering the host —
+ * WCAG 1.4.13 hoverable comes free. */
+/* .has-tip is only a hover/focus scope marker — it deliberately sets no
+ * `position`: an unlayered rule here would outrank Tailwind's layered
+ * position utilities (the braces button is `has-tip absolute`). Every host
+ * brings its own positioning class (`relative` via the primitives). */
+.tip {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  width: max-content;
+  max-width: 18rem;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--foreground);
+  padding: 2px 8px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+}
+/* Hover waits ~400ms like a native title; keyboard focus shows instantly
+ * (the transition lives only on the hover rule). :has() covers wrapped
+ * controls (select/input in a TipWrap) that hold the focus themselves. */
+.has-tip:hover > .tip {
+  transition:
+    opacity 80ms ease-out 400ms,
+    visibility 0s linear 400ms;
+}
+.has-tip:hover > .tip,
+.has-tip:focus-visible > .tip {
+  visibility: visible;
+  opacity: 1;
+}
+/* Wrapped controls (TipWrap around select/input) hold the focus themselves.
+ * Kept as a separate rule: a browser without :has() support drops the whole
+ * selector list it appears in, and that must not take the :hover rule down. */
+.has-tip:has(:focus-visible) > .tip {
+  visibility: visible;
+  opacity: 1;
+}
+.tip-end {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.tip-start {
+  left: 0;
+  transform: none;
+}
+/* WCAG 1.4.13 dismissal: Escape (App-level listener) hides every tooltip
+ * without moving hover or focus; moving either re-enables them. */
+html.tips-dismissed .tip {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
 /* Tour entrance: a quick backdrop fade and panel rise. Gated on
  * prefers-reduced-motion so motion-sensitive users get an instant dialog. */
 @media (prefers-reduced-motion: no-preference) {

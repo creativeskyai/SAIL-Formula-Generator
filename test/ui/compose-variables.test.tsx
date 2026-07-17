@@ -76,7 +76,10 @@ describe('Variables manager', () => {
     expect(useStore.getState().variables).toEqual([
       { domain: 'ri', name: 'caseId', type: 'Text' },
     ]);
-    expect(screen.getByText('ri!caseId', { exact: false })).toBeInTheDocument();
+    // ignore the Remove button's tooltip span, which repeats the variable name
+    expect(
+      screen.getByText('ri!caseId', { exact: false, ignore: '.tip, script, style' }),
+    ).toBeInTheDocument();
 
     // Each row's remove button is named after its variable (WCAG 4.1.2).
     fireEvent.click(screen.getByRole('button', { name: 'Remove ri!caseId' }));

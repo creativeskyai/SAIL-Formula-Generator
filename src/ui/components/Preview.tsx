@@ -62,7 +62,7 @@ export function Preview({
             type="button"
             variant="outline"
             onClick={onToggleExpanded}
-            title={
+            tip={
               expanded
                 ? 'Switch to compact single-line formatting'
                 : 'Switch to expanded multi-line formatting'
@@ -75,7 +75,8 @@ export function Preview({
             onClick={onCopy}
             disabled={!canCopy || !code}
             className={copyStatus === 'failed' ? 'bg-destructive' : undefined}
-            title={canCopy ? 'Copy SAIL to clipboard (Ctrl+Enter)' : 'Resolve errors before copying'}
+            tip={canCopy ? 'Copy SAIL to clipboard (Ctrl+Enter)' : 'Resolve errors before copying'}
+            tipAlign="end"
           >
             {COPY_LABEL[copyStatus]}
           </Button>

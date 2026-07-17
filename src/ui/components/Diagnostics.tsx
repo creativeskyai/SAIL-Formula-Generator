@@ -64,7 +64,7 @@ export function Diagnostics({
                 type="button"
                 variant="outline"
                 className="ml-2 px-1.5 py-0 text-[11px] font-normal"
-                title={`Declare ${d.fix.domain}!${d.fix.name} (as ${CREATED_TYPE}) so this reference resolves`}
+                tip={`Declare ${d.fix.domain}!${d.fix.name} (as ${CREATED_TYPE}) so this reference resolves`}
                 onClick={() =>
                   onDeclareVariable({ domain: d.fix!.domain, name: d.fix!.name, type: CREATED_TYPE })
                 }

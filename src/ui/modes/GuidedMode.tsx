@@ -118,7 +118,8 @@ export function GuidedMode() {
           <Button
             type="button"
             variant="outline"
-            title="Insert a dummy all-zero-UUID reference to test generation without an Appian environment"
+            tip="Insert a dummy all-zero-UUID reference to test generation without an Appian environment"
+            tipAlign="end"
             onClick={() => setRecordTypeRef(SAMPLE_RECORD_TYPE_REF)}
           >
             Use sample
@@ -127,7 +128,8 @@ export function GuidedMode() {
             <Button
               type="button"
               variant="ghost"
-              title="Clear the record type reference"
+              tip="Clear the record type reference"
+              tipAlign="end"
               onClick={() => setRecordTypeRef('')}
             >
               Clear
@@ -153,7 +155,8 @@ export function GuidedMode() {
                 type="button"
                 variant="ghost"
                 aria-current={r.id === selectedRecipeId ? 'true' : undefined}
-                title={r.description}
+                tip={r.description}
+                tipAlign="start"
                 onClick={() => selectRecipe(r.id)}
                 className={cn(
                   // border-l always reserved (transparent) so the active rail

@@ -127,7 +127,8 @@ export function ComposeMode() {
                   type="button"
                   variant="ghost"
                   onClick={() => insert(f)}
-                  title={f.summary}
+                  tip={f.summary}
+                  tipAlign="start"
                   className="justify-start px-2 py-1 text-left font-mono text-xs font-normal"
                 >
                   {f.name}
@@ -155,7 +156,7 @@ export function ComposeMode() {
               variant="ghost"
               onClick={() => setComposeText('')}
               disabled={!composeText}
-              title="Clear the editor"
+              tip="Clear the editor"
             >
               Clear
             </Button>
@@ -164,7 +165,8 @@ export function ComposeMode() {
               onClick={copy}
               disabled={!composeText}
               className={copyStatus === 'failed' ? 'bg-destructive' : undefined}
-              title="Copy the expression to the clipboard (Ctrl+Enter)"
+              tip="Copy the expression to the clipboard (Ctrl+Enter)"
+              tipAlign="end"
             >
               {copyStatus === 'idle' ? 'Copy' : copyStatus === 'copied' ? 'Copied' : 'Copy failed'}
             </Button>
@@ -215,7 +217,7 @@ export function ComposeMode() {
                     type="button"
                     variant="outline"
                     className="px-1.5 py-0 text-[11px] font-normal"
-                    title={`Declare ${ref} (as ${CREATED_TYPE}) so this reference resolves`}
+                    tip={`Declare ${ref} (as ${CREATED_TYPE}) so this reference resolves`}
                     onClick={() =>
                       addVariable({ domain: domain as VarDomain, name, type: CREATED_TYPE })
                     }
