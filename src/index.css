@@ -154,6 +154,10 @@ h4 {
  * position utilities (the braces button is `has-tip absolute`). Every host
  * brings its own positioning class (`relative` via the primitives). */
 .tip {
+  /* display:none, NOT visibility:hidden — an invisible box still occupies
+   * layout space, and a tip hanging below its host adds scrollable overflow
+   * to every scroll container (phantom horizontal scrollbars at rest). */
+  display: none;
   position: absolute;
   top: calc(100% + 4px);
   left: 50%;
@@ -172,28 +176,27 @@ h4 {
   text-align: left;
   white-space: normal;
   pointer-events: none;
-  visibility: hidden;
-  opacity: 0;
 }
-/* Hover waits ~400ms like a native title; keyboard focus shows instantly
- * (the transition lives only on the hover rule). :has() covers wrapped
- * controls (select/input in a TipWrap) that hold the focus themselves. */
+/* Hover waits ~400ms like a native title — as an animation with a backwards
+ * fill (opacity 0 during the delay), because display:none can't transition.
+ * Keyboard focus shows instantly (no animation on the focus rules). */
 .has-tip:hover > .tip {
-  transition:
-    opacity 80ms ease-out 400ms,
-    visibility 0s linear 400ms;
+  display: block;
+  animation: tip-in 80ms ease-out 400ms backwards;
 }
-.has-tip:hover > .tip,
+@keyframes tip-in {
+  from {
+    opacity: 0;
+  }
+}
 .has-tip:focus-visible > .tip {
-  visibility: visible;
-  opacity: 1;
+  display: block;
 }
 /* Wrapped controls (TipWrap around select/input) hold the focus themselves.
  * Kept as a separate rule: a browser without :has() support drops the whole
- * selector list it appears in, and that must not take the :hover rule down. */
+ * selector list it appears in, and that must not take the focus rule down. */
 .has-tip:has(:focus-visible) > .tip {
-  visibility: visible;
-  opacity: 1;
+  display: block;
 }
 .tip-end {
   left: auto;
@@ -203,12 +206,14 @@ h4 {
 .tip-start {
   left: 0;
   transform: none;
+  /* tip-start hosts are full-width rows in scrollable catalog columns — cap
+   * the tip to the host so a shown tip never widens the scroll container. */
+  max-width: 100%;
 }
 /* WCAG 1.4.13 dismissal: Escape (App-level listener) hides every tooltip
  * without moving hover or focus; moving either re-enables them. */
 html.tips-dismissed .tip {
-  visibility: hidden !important;
-  opacity: 0 !important;
+  display: none !important;
 }
 
 /* Tour entrance: a quick backdrop fade and panel rise. Gated on
